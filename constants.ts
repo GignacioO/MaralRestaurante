@@ -81,7 +81,7 @@ export const INITIAL_MENU: MenuCategory[] = [
         name: 'Ravioles de verdura con salsa bolognesa', 
         price: '30000', 
         desc: 'Confeccionado por Amalia Galante, la abuela del pueblo, más de 65 años de experiencia culinaria',
-        image: 'https://postimg.cc/FkdK21Jx'
+        image: 'https://postimg.cc/FkdK21Jx.jpg'
       },
     ]
 
