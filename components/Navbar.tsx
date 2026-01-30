@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Menu, X, Utensils, Lock, Unlock } from 'lucide-react';
+import { Menu, X, Utensils, Lock, Unlock, RefreshCw } from 'lucide-react';
 import { AdminContext } from '../App';
 
 const Navbar: React.FC = () => {
@@ -48,6 +48,14 @@ const Navbar: React.FC = () => {
     setIsOpen(false);
   };
 
+  const handleReset = () => {
+    if (confirm('¿Deseas restablecer el menú a la versión oficial? Se perderán tus cambios locales no guardados en el código.')) {
+      localStorage.removeItem('maral_menu');
+      localStorage.removeItem('maral_content');
+      window.location.reload();
+    }
+  };
+
   const navLinks = [
     { name: 'Inicio', id: 'inicio' },
     { name: 'Nosotros', id: 'nosotros' },
@@ -75,16 +83,31 @@ const Navbar: React.FC = () => {
                 {link.name}
               </button>
             ))}
-            <button
-              onClick={handleAdminAccess}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full border ${admin?.isAdmin ? 'bg-amber-600 border-amber-600 text-white' : 'border-zinc-700 text-zinc-400 hover:border-amber-500 hover:text-amber-500'}`}
-            >
-              {admin?.isAdmin ? <Unlock size={14} /> : <Lock size={14} />}
-              {admin?.isAdmin ? 'ADMIN ACTIVO' : 'PRIVADO'}
-            </button>
+            
+            <div className="flex items-center gap-2">
+              {admin?.isAdmin && (
+                <button
+                  onClick={handleReset}
+                  title="Restablecer a versión oficial"
+                  className="p-2 text-zinc-500 hover:text-amber-500 transition-colors"
+                >
+                  <RefreshCw size={16} />
+                </button>
+              )}
+              <button
+                onClick={handleAdminAccess}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full border ${admin?.isAdmin ? 'bg-amber-600 border-amber-600 text-white' : 'border-zinc-700 text-zinc-400 hover:border-amber-500 hover:text-amber-500'}`}
+              >
+                {admin?.isAdmin ? <Unlock size={14} /> : <Lock size={14} />}
+                {admin?.isAdmin ? 'ADMIN ACTIVO' : 'PRIVADO'}
+              </button>
+            </div>
           </div>
 
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-4">
+            {admin?.isAdmin && (
+               <button onClick={handleReset} className="text-zinc-500"><RefreshCw size={20} /></button>
+            )}
             <button onClick={() => setIsOpen(!isOpen)} className="text-zinc-100 p-2">
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
