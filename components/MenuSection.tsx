@@ -1,7 +1,8 @@
 
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AdminContext } from '../App';
-import { Plus, Edit2, Trash2, Download, Loader2, Camera, X, Save, Upload, Link as LinkIcon, RotateCcw, RotateCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Download, Loader2, Camera, X, Save, Upload, Link as LinkIcon, RotateCcw, RotateCw, Code, Copy, Check } from 'lucide-react';
+import { APP_VERSION, RESTAURANT_DATA, REVIEWS } from '../constants';
 
 interface EditingItem {
   catId: string;
@@ -9,7 +10,7 @@ interface EditingItem {
   name: string;
   price: string;
   desc: string;
-  image: string;
+  image?: string;
 }
 
 const MenuSection: React.FC = () => {
@@ -17,6 +18,8 @@ const MenuSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -81,6 +84,42 @@ const MenuSection: React.FC = () => {
     setEditingItem(null);
   };
 
+  const generateGithubCode = () => {
+    const currentVer = parseFloat(APP_VERSION);
+    const nextVer = (currentVer + 0.1).toFixed(1);
+    
+    const code = `
+export const APP_VERSION = "${nextVer}";
+
+export const RESTAURANT_DATA = ${JSON.stringify(RESTAURANT_DATA, null, 2)};
+
+export interface MenuItem {
+  name: string;
+  price: string;
+  desc: string;
+  image?: string;
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  items: MenuItem[];
+}
+
+export const INITIAL_MENU: MenuCategory[] = ${JSON.stringify(admin.menu, null, 2)};
+
+export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
+`;
+    return code.trim();
+  };
+
+  const handleCopyCode = () => {
+    const code = generateGithubCode();
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && editingItem) {
@@ -96,9 +135,9 @@ const MenuSection: React.FC = () => {
 
   return (
     <section id="menu" className="py-24 bg-zinc-900/50 relative">
-      {/* Barra de Herramientas Admin (Undo/Redo) */}
+      {/* Barra de Herramientas Admin */}
       {admin.isAdmin && (
-        <div className="sticky top-20 z-40 flex justify-center mb-8 no-print">
+        <div className="sticky top-20 z-40 flex justify-center mb-8 no-print gap-2">
           <div className="bg-zinc-900 border border-zinc-800 p-1 rounded-full shadow-2xl flex items-center gap-1">
             <button 
               onClick={admin.undo}
@@ -118,6 +157,13 @@ const MenuSection: React.FC = () => {
               <RotateCw size={18} />
             </button>
           </div>
+          
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+          >
+            <Code size={16} /> Publicar Cambios
+          </button>
         </div>
       )}
 
@@ -225,114 +271,95 @@ const MenuSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal de Edición (Admin) */}
+      {/* Modal Exportar para GitHub */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center px-4 bg-zinc-950/95 backdrop-blur-md no-print">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/50">
+              <div>
+                <h3 className="text-xl font-bold text-amber-500 uppercase tracking-widest">Publicar Cambios Permanentes</h3>
+                <p className="text-xs text-zinc-500 mt-1 uppercase">Copia este código y pégalo en tu archivo "constants.ts" en GitHub.</p>
+              </div>
+              <button onClick={() => setShowExportModal(false)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
+            </div>
+            <div className="flex-1 overflow-hidden p-6">
+              <div className="relative h-full">
+                <textarea 
+                  readOnly 
+                  value={generateGithubCode()}
+                  className="w-full h-full bg-black text-green-500 font-mono text-xs p-4 border border-zinc-800 rounded resize-none focus:outline-none"
+                />
+                <button 
+                  onClick={handleCopyCode}
+                  className="absolute top-4 right-4 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded flex items-center gap-2 text-xs font-bold uppercase transition-all"
+                >
+                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                  {copied ? 'Copiado' : 'Copiar Código'}
+                </button>
+              </div>
+            </div>
+            <div className="p-6 bg-zinc-950/50 border-t border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+              <p className="text-zinc-400 uppercase tracking-tighter">
+                Versión detectada: <span className="text-white">{APP_VERSION}</span> → Nueva versión: <span className="text-amber-500">{(parseFloat(APP_VERSION) + 0.1).toFixed(1)}</span>
+              </p>
+              <div className="flex gap-4">
+                <a 
+                  href="https://github.com" 
+                  target="_blank" 
+                  className="text-amber-500 hover:underline font-bold uppercase tracking-widest"
+                >
+                  Ir a GitHub →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edición */}
       {editingItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-zinc-950/90 backdrop-blur-sm no-print">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-2xl overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-zinc-800 bg-zinc-950/50">
               <h3 className="text-xl font-bold uppercase tracking-widest text-amber-500 flex items-center gap-2">
                 <Edit2 size={20} /> Editar Plato
               </h3>
-              <button onClick={() => setEditingItem(null)} className="text-zinc-500 hover:text-white transition-colors">
-                <X size={24} />
-              </button>
+              <button onClick={() => setEditingItem(null)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
             </div>
-
             <div className="p-8 space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Nombre del Plato</label>
-                    <input 
-                      type="text" 
-                      value={editingItem.name} 
-                      onChange={e => setEditingItem({...editingItem, name: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:outline-none focus:border-amber-500 transition-colors"
-                    />
+                    <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Nombre</label>
+                    <input type="text" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:border-amber-500 outline-none" />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Precio / Etiqueta</label>
-                    <input 
-                      type="text" 
-                      value={editingItem.price} 
-                      onChange={e => setEditingItem({...editingItem, price: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:outline-none focus:border-amber-500 transition-colors"
-                      placeholder="Ej: $4.500 o Consultar"
-                    />
+                    <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Precio</label>
+                    <input type="text" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:border-amber-500 outline-none" />
                   </div>
                 </div>
-
                 <div className="space-y-4">
-                  <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Imagen del Plato</label>
-                  <div className="relative aspect-video bg-zinc-950 border border-zinc-800 overflow-hidden flex items-center justify-center group/img">
+                  <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Imagen</label>
+                  <div className="aspect-video bg-zinc-950 border border-zinc-800 overflow-hidden flex items-center justify-center group/img relative">
                     {editingItem.image ? (
-                      <>
-                        <img src={editingItem.image} alt="Preview" className="w-full h-full object-cover" />
-                        <button 
-                          onClick={() => setEditingItem({...editingItem, image: ''})}
-                          className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"
-                        >
-                          <X size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <div className="text-zinc-600 flex flex-col items-center gap-2">
-                        <Camera size={32} />
-                        <span className="text-[10px] uppercase tracking-widest">Sin imagen</span>
-                      </div>
-                    )}
+                      <img src={editingItem.image} className="w-full h-full object-cover" />
+                    ) : <Camera size={32} className="text-zinc-700" />}
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white p-3 text-xs font-bold transition-all uppercase tracking-widest"
-                    >
-                      <Upload size={14} /> Galería
-                    </button>
-                    <button 
-                      onClick={() => {
-                        const url = prompt('Pegue la URL de la imagen aquí:');
-                        if (url) setEditingItem({...editingItem, image: url});
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white p-3 text-xs font-bold transition-all uppercase tracking-widest"
-                    >
-                      <LinkIcon size={14} /> Link URL
-                    </button>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                      accept="image/*" 
-                    />
+                    <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-zinc-800 p-2 text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-700 transition-colors">Subir</button>
+                    <button onClick={() => setEditingItem({...editingItem, image: prompt('URL de imagen:') || ''})} className="flex-1 bg-zinc-800 p-2 text-[10px] uppercase font-bold tracking-widest hover:bg-zinc-700 transition-colors">Link</button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
                   </div>
                 </div>
               </div>
-
               <div>
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">Descripción</label>
-                <textarea 
-                  value={editingItem.desc} 
-                  onChange={e => setEditingItem({...editingItem, desc: e.target.value})}
-                  rows={3}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:outline-none focus:border-amber-500 transition-colors resize-none"
-                />
+                <textarea value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} rows={3} className="w-full bg-zinc-950 border border-zinc-800 p-3 text-white focus:border-amber-500 outline-none resize-none" />
               </div>
             </div>
-
             <div className="p-6 bg-zinc-950/50 border-t border-zinc-800 flex justify-end gap-4">
-              <button 
-                onClick={() => setEditingItem(null)}
-                className="px-6 py-3 text-zinc-500 hover:text-white transition-colors uppercase text-xs font-bold tracking-widest"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleSaveEdit}
-                className="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-2 uppercase text-xs font-bold tracking-widest transition-all active:scale-95"
-              >
-                <Save size={16} /> Guardar Cambios
-              </button>
+              <button onClick={() => setEditingItem(null)} className="px-6 py-3 text-zinc-500 uppercase text-xs font-bold">Cancelar</button>
+              <button onClick={handleSaveEdit} className="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white uppercase text-xs font-bold transition-all">Guardar Localmente</button>
             </div>
           </div>
         </div>
@@ -340,11 +367,10 @@ const MenuSection: React.FC = () => {
 
       {showToast && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] no-print">
-          <div className="bg-zinc-100 text-zinc-950 px-6 py-4 rounded-none shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300 border-l-4 border-amber-600">
+          <div className="bg-zinc-100 text-zinc-950 px-6 py-4 rounded-none shadow-2xl flex items-center gap-4 border-l-4 border-amber-600">
             <Loader2 className="text-amber-600 animate-spin" size={24} />
             <div>
-              <p className="font-bold uppercase tracking-widest text-xs">Abriendo ventana de impresión...</p>
-              <p className="text-[10px] text-zinc-500 mt-1 uppercase">Importante: En "Destino", elija "Guardar como PDF"</p>
+              <p className="font-bold uppercase tracking-widest text-xs">Preparando PDF...</p>
             </div>
           </div>
         </div>
