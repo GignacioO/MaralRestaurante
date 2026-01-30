@@ -1,4 +1,5 @@
 
+
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
   address: "Tucumán 2201, C1051 ACA, Ciudad Autónoma de Buenos Aires",
@@ -70,21 +71,14 @@ export const INITIAL_MENU: MenuCategory[] = [
     name: 'Pastas Caseras',
     items: [
       { 
-        name: 'Ravioles de Verdura', 
-        price: 'Consultar', 
-        desc: 'Con masa de huevo y espinaca fresca. Caseros.',
-        image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&q=80&w=400'
+        name: 'Ravioles de verdura con salsa bolognesa', 
+        price: '30000', 
+        desc: 'Confeccionado por Amalia Galante, la abuela del pueblo, más de 65 años de experiencia culinaria.',
+        image: 'https://i.postimg.cc/FkdK21Jx/ravioles.jpg'
       },
       { name: 'Ñoquis de Papa', price: 'Consultar', desc: 'Hechos a mano todos los días.', image: '' },
       { name: 'Sorrentinos Maral', price: 'Consultar', desc: 'Rellenos de jamón, mozzarella y ricota.', image: '' }
-          { 
-        name: 'Ravioles de verdura con salsa bolognesa', 
-        price: '30000', 
-        desc: 'Confeccionado por Amalia Galante, la abuela del pueblo, más de 65 años de experiencia culinaria',
-        image: 'https://postimg.cc/FkdK21Jx.jpg'
-      },
     ]
-
   },
   {
     id: 'postres',
