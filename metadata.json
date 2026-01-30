@@ -1,0 +1,7 @@
+{
+  "name": "Maral Restaurante",
+  "description": "Sitio web oficial de Maral Restaurante en Buenos Aires. Una experiencia gastronómica premium con foco en la calidad y el confort.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
