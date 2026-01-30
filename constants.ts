@@ -1,4 +1,7 @@
 
+// CADA VEZ QUE CAMBIES EL MENÚ EN EL CÓDIGO, SUBÍ ESTE NÚMERO (ej: "1.1", "1.2", etc.)
+// Esto obligará a todos los celulares a actualizarse automáticamente.
+export const APP_VERSION = "1.1";
 
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
