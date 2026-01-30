@@ -7,7 +7,7 @@ import MenuSection from './components/MenuSection';
 import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import { INITIAL_MENU, MenuCategory } from './constants';
+import { INITIAL_MENU, MenuCategory, APP_VERSION } from './constants';
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -32,6 +32,14 @@ interface AdminContextType {
 
 export const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+const DEFAULT_CONTENT = {
+  heroTitle: "MARAL RESTAURANTE",
+  heroSubtitle: "Sabor que trasciende, momentos que perduran en el corazón de Buenos Aires.",
+  aboutTitle: "Calidad que define nuestra historia",
+  aboutDesc1: "En Maral Restaurante, nos dedicamos a elevar la tradición culinaria porteña. Ubicados estratégicamente en el corazón de la ciudad, ofrecemos un refugio de sabor para aquellos que buscan una experiencia cuidada en cada detalle.",
+  aboutDesc2: "Nuestra filosofía se basa en la selección rigurosa de ingredientes frescos y la pasión por el servicio. Ya sea para un desayuno tranquilo o una cena sofisticada, Maral es el punto de encuentro donde la calidad y la hospitalidad se unen."
+};
+
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState(() => {
@@ -39,31 +47,38 @@ function App() {
   });
   
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
-    const saved = localStorage.getItem('maral_menu');
-    return saved ? JSON.parse(saved) : INITIAL_MENU;
+    const savedVersion = localStorage.getItem('maral_version');
+    const savedMenu = localStorage.getItem('maral_menu');
+    
+    // Si la versión guardada es distinta a la del código, forzamos el menú inicial
+    if (savedVersion !== APP_VERSION) {
+      return INITIAL_MENU;
+    }
+    return savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU;
+  });
+
+  const [content, setContent] = useState(() => {
+    const savedVersion = localStorage.getItem('maral_version');
+    const savedContent = localStorage.getItem('maral_content');
+    
+    if (savedVersion !== APP_VERSION) {
+      return DEFAULT_CONTENT;
+    }
+    return savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT;
   });
 
   // History state for Undo/Redo
   const [past, setPast] = useState<MenuCategory[][]>([]);
   const [future, setFuture] = useState<MenuCategory[][]>([]);
 
-  const [content, setContent] = useState(() => {
-    const saved = localStorage.getItem('maral_content');
-    return saved ? JSON.parse(saved) : {
-      heroTitle: "MARAL RESTAURANTE",
-      heroSubtitle: "Sabor que trasciende, momentos que perduran en el corazón de Buenos Aires.",
-      aboutTitle: "Calidad que define nuestra historia",
-      aboutDesc1: "En Maral Restaurante, nos dedicamos a elevar la tradición culinaria porteña. Ubicados estratégicamente en el corazón de la ciudad, ofrecemos un refugio de sabor para aquellos que buscan una experiencia cuidada en cada detalle.",
-      aboutDesc2: "Nuestra filosofía se basa en la selección rigurosa de ingredientes frescos y la pasión por el servicio. Ya sea para un desayuno tranquilo o una cena sofisticada, Maral es el punto de encuentro donde la calidad y la hospitalidad se unen."
-    };
-  });
-
   useEffect(() => {
     localStorage.setItem('maral_menu', JSON.stringify(menu));
+    localStorage.setItem('maral_version', APP_VERSION);
   }, [menu]);
 
   useEffect(() => {
     localStorage.setItem('maral_content', JSON.stringify(content));
+    localStorage.setItem('maral_version', APP_VERSION);
   }, [content]);
 
   useEffect(() => {
@@ -72,7 +87,7 @@ function App() {
 
   const updateMenu = (newMenu: MenuCategory[]) => {
     setPast(prev => [...prev, menu]);
-    setFuture([]); // New action clears redo stack
+    setFuture([]); 
     setMenu(newMenu);
   };
 
