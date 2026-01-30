@@ -78,6 +78,12 @@ export const INITIAL_MENU: MenuCategory[] = [
       { name: 'Ñoquis de Papa', price: 'Consultar', desc: 'Hechos a mano todos los días.', image: '' },
       { name: 'Sorrentinos Maral', price: 'Consultar', desc: 'Rellenos de jamón, mozzarella y ricota.', image: '' }
     ]
+    { 
+        name: 'Ravioles de verdura con salsa bolognesa', 
+        price: '30000', 
+        desc: 'Confeccionado por Amalia Galante, la abuela del pueblo, más de 65 años de experiencia culinaria',
+        image: 'https://postimg.cc/FkdK21Jx'
+      },
   },
   {
     id: 'postres',
