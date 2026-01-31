@@ -1,8 +1,8 @@
 
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { AdminContext } from '../App';
-import { Plus, Edit2, Trash2, Download, Loader2, Camera, X, Save, Upload, Link as LinkIcon, Code, Copy, Check } from 'lucide-react';
-import { APP_VERSION, RESTAURANT_DATA, REVIEWS } from '../constants';
+import { Plus, Edit2, Trash2, FileDown, Camera, X, LayoutGrid, List, Search, UtensilsCrossed } from 'lucide-react';
+import { APP_VERSION, RESTAURANT_DATA, INITIAL_MENU } from '../constants';
 
 interface EditingItem {
   catId: string;
@@ -11,23 +11,19 @@ interface EditingItem {
   price: string;
   desc: string;
   image?: string;
+  hasSide: boolean;
+  sideName: string;
+  sidePrice: string;
 }
 
 const MenuSection: React.FC = () => {
   const admin = useContext(AdminContext);
   const [activeTab, setActiveTab] = useState('');
-  const [showToast, setShowToast] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleOpenExport = () => setShowExportModal(true);
-    window.addEventListener('open-github-export', handleOpenExport);
-    return () => window.removeEventListener('open-github-export', handleOpenExport);
-  }, []);
 
   useEffect(() => {
     if (admin?.menu.length && !activeTab) {
@@ -35,93 +31,37 @@ const MenuSection: React.FC = () => {
     }
   }, [admin?.menu, activeTab]);
 
-  if (!admin) return null;
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const results: any[] = [];
+    admin?.menu.forEach(cat => {
+      cat.items.forEach(item => {
+        if (item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          results.push({ ...item, catName: cat.name });
+        }
+      });
+    });
+    return results;
+  }, [searchQuery, admin?.menu]);
 
-  const handleDownload = () => {
-    setShowToast(true);
-    setTimeout(() => {
-      window.print();
-      setShowToast(false);
-    }, 1000);
-  };
+  if (!admin) return null;
 
   const handleAddItem = (catId: string) => {
     const newItem = { name: 'Nuevo Plato', price: '$0', desc: 'Descripción...', image: '' };
-    const newMenu = admin.menu.map(cat => {
-      if (cat.id === catId) return { ...cat, items: [...cat.items, newItem] };
-      return cat;
-    });
-    admin.updateMenu(newMenu);
+    admin.updateMenu(admin.menu.map(cat => cat.id === catId ? { ...cat, items: [...cat.items, newItem] } : cat));
   };
 
-  const handleDeleteItem = (catId: string, itemIdx: number) => {
-    if (!confirm('¿Eliminar este plato?')) return;
-    const newMenu = admin.menu.map(cat => {
-      if (cat.id === catId) {
-        const newItems = [...cat.items];
-        newItems.splice(itemIdx, 1);
-        return { ...cat, items: newItems };
-      }
-      return cat;
-    });
-    admin.updateMenu(newMenu);
-  };
-
-  const handlePriceChange = (val: string) => {
+  const handlePriceChange = (val: string, isSide = false) => {
     if (!editingItem) return;
-    
-    // Solo permitimos dígitos. Cualquier otra cosa se elimina.
     const numbersOnly = val.replace(/\D/g, '');
-    
-    // Siempre forzamos el formato $ + números
-    const formattedPrice = numbersOnly === '' ? '$' : `$${numbersOnly}`;
-    
-    setEditingItem({ ...editingItem, price: formattedPrice });
-    
-    // Aseguramos que el cursor se mantenga al final después de cada cambio
-    setTimeout(() => {
-      if (priceInputRef.current) {
-        const len = priceInputRef.current.value.length;
-        priceInputRef.current.setSelectionRange(len, len);
-      }
-    }, 0);
-  };
-
-  const handlePriceFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!editingItem) return;
-    
-    // Si el precio es el valor base "$0", lo limpiamos a "$" para escribir directo
-    if (editingItem.price === '$0') {
-      setEditingItem({ ...editingItem, price: '$' });
-    }
-    
-    // Forzamos el cursor al final
-    const val = e.target.value;
-    setTimeout(() => {
-      if (priceInputRef.current) {
-        const len = priceInputRef.current.value.length;
-        priceInputRef.current.setSelectionRange(len, len);
-      }
-    }, 0);
-  };
-
-  const handlePriceClick = (e: React.MouseEvent<HTMLInputElement>) => {
-    // Evitamos que el usuario mueva el cursor al medio o al inicio ($)
-    if (priceInputRef.current) {
-      const len = priceInputRef.current.value.length;
-      priceInputRef.current.setSelectionRange(len, len);
-    }
+    const formatted = numbersOnly === '' ? '$' : `$${numbersOnly}`;
+    if (isSide) setEditingItem({ ...editingItem, sidePrice: formatted });
+    else setEditingItem({ ...editingItem, price: formatted });
   };
 
   const handleSaveEdit = () => {
     if (!editingItem) return;
-    
-    // Limpieza final antes de guardar
-    let finalPrice = editingItem.price;
-    if (finalPrice === '$' || finalPrice === '') {
-      finalPrice = '$0';
-    }
-    
+    const finalPrice = editingItem.price === '$' ? '$0' : editingItem.price;
     const newMenu = admin.menu.map(cat => {
       if (cat.id === editingItem.catId) {
         const newItems = [...cat.items];
@@ -129,7 +69,8 @@ const MenuSection: React.FC = () => {
           name: editingItem.name,
           price: finalPrice,
           desc: editingItem.desc,
-          image: editingItem.image
+          image: editingItem.image,
+          side: editingItem.hasSide ? { name: editingItem.sideName, price: editingItem.sidePrice } : undefined
         };
         return { ...cat, items: newItems };
       }
@@ -139,198 +80,196 @@ const MenuSection: React.FC = () => {
     setEditingItem(null);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && editingItem) {
-      const reader = new FileReader();
-      reader.onloadend = () => setEditingItem({ ...editingItem, image: reader.result as string });
-      reader.readAsDataURL(file);
-    }
-  };
-
   const activeCategory = admin.menu.find(c => c.id === activeTab);
 
-  const generateGithubCode = () => {
-    const currentVer = parseFloat(APP_VERSION);
-    const nextVer = (currentVer + 0.1).toFixed(1);
-    return `
-export const APP_VERSION = "${nextVer}";
-export const RESTAURANT_DATA = ${JSON.stringify(RESTAURANT_DATA, null, 2)};
-export interface MenuItem { name: string; price: string; desc: string; image?: string; }
-export interface MenuCategory { id: string; name: string; items: MenuItem[]; }
-export const INITIAL_MENU: MenuCategory[] = ${JSON.stringify(admin.menu, null, 2)};
-export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
-`.trim();
+  const renderItem = (item: any, idx: number, catId: string) => {
+    const hasSide = !!item.side;
+    const sidePriceNum = hasSide ? parseInt(item.side?.price.replace(/\D/g, '') || '0') : 0;
+    const mainPriceNum = parseInt(item.price.replace(/\D/g, '') || '0');
+    const totalPrice = sidePriceNum > 0 ? `$${mainPriceNum + sidePriceNum}` : item.price;
+    const displayName = sidePriceNum === 0 && hasSide ? `${item.name} (con ${item.side.name})` : item.name;
+
+    if (viewMode === 'list') {
+      return (
+        <div key={idx} className="py-4 border-b border-zinc-900 group relative">
+          <div className="flex justify-between items-baseline gap-4">
+            <div className="flex-1">
+              <h4 className="text-zinc-100 font-bold uppercase tracking-tight text-sm">
+                {displayName}
+                {sidePriceNum > 0 && <span className="ml-2 text-[10px] text-amber-500 font-normal">+ {item.side.name}</span>}
+              </h4>
+              <p className="text-zinc-500 text-xs mt-1 font-light italic">{item.desc}</p>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-amber-500 font-serif font-bold">{totalPrice}</span>
+              {admin.isAdmin && (
+                <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => setEditingItem({ catId, idx, ...item, hasSide: !!item.side, sideName: item.side?.name || '', sidePrice: item.side?.price || '$0' })} className="text-zinc-500 hover:text-amber-500"><Edit2 size={12} /></button>
+                  <button onClick={() => admin.updateMenu(admin.menu.map(c => c.id === catId ? {...c, items: c.items.filter((_, i) => i !== idx)} : c))} className="text-zinc-500 hover:text-red-500"><Trash2 size={12} /></button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={idx} className="group flex gap-4 items-start bg-zinc-900/20 p-4 rounded-sm border border-transparent hover:border-zinc-800 transition-all">
+        <div className="w-20 h-20 shrink-0 bg-zinc-800 overflow-hidden">
+          {item.image ? <img src={item.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-zinc-700"><Camera size={20} /></div>}
+        </div>
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
+            <h4 className="text-sm font-bold text-zinc-100 uppercase">{displayName}</h4>
+            <span className="text-amber-500 font-bold text-sm">{totalPrice}</span>
+          </div>
+          <p className="text-zinc-500 text-xs mt-1 leading-relaxed italic">{item.desc}</p>
+          {sidePriceNum > 0 && <p className="text-[10px] text-amber-500/70 mt-1 uppercase tracking-widest">Incluye {item.side.name}</p>}
+          {admin.isAdmin && (
+            <div className="mt-3 flex gap-2">
+              <button onClick={() => setEditingItem({ catId, idx, ...item, hasSide: !!item.side, sideName: item.side?.name || '', sidePrice: item.side?.price || '$0' })} className="p-1.5 bg-zinc-800 text-amber-500 rounded-sm hover:bg-zinc-700"><Edit2 size={12} /></button>
+              <button onClick={() => admin.updateMenu(admin.menu.map(c => c.id === catId ? {...c, items: c.items.filter((_, i) => i !== idx)} : c))} className="p-1.5 bg-zinc-800 text-red-500 rounded-sm hover:bg-zinc-700"><Trash2 size={12} /></button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <section id="menu" className="py-24 bg-zinc-900/50 relative">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 no-print">
-          <h2 className="text-4xl md:text-5xl font-bold serif mb-4">Nuestra Carta</h2>
-          <p className="text-zinc-500 uppercase tracking-widest text-sm mb-6">Sabores que cuentan una historia</p>
-          <div className="w-20 h-1 bg-amber-500 mx-auto"></div>
+    <section id="menu" className="py-24 bg-zinc-950">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header de Sección con Buscador */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 no-print">
+          <div>
+            <h2 className="text-3xl font-bold serif flex items-center gap-3">
+              <UtensilsCrossed className="text-amber-500" size={24} /> Nuestra Carta
+            </h2>
+          </div>
+          
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+              <input 
+                type="text" 
+                placeholder="Buscar plato..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-full py-2 pl-10 pr-4 text-xs focus:border-amber-500 outline-none transition-all"
+              />
+            </div>
+            <div className="flex bg-zinc-900 p-1 rounded-md border border-zinc-800">
+              <button onClick={() => setViewMode('grid')} className={`p-2 rounded ${viewMode === 'grid' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`}><LayoutGrid size={16} /></button>
+              <button onClick={() => setViewMode('list')} className={`p-2 rounded ${viewMode === 'list' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`}><List size={16} /></button>
+            </div>
+            <button onClick={() => window.print()} className="p-2 text-zinc-500 hover:text-amber-500 border border-zinc-800 rounded-md" title="Descargar PDF"><FileDown size={18} /></button>
+          </div>
         </div>
 
-        {/* Categorías */}
-        <div className="flex flex-wrap justify-center gap-4 mb-16 no-print">
-          {admin.menu.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setActiveTab(category.id)}
-              className={`px-6 py-2 text-xs font-bold uppercase tracking-widest transition-all border-b-2 ${
-                activeTab === category.id ? 'border-amber-500 text-amber-500' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-              }`}
+        {/* Resultados de Búsqueda */}
+        {searchQuery && (
+          <div className="mb-12 bg-zinc-900/30 p-6 border border-amber-500/20 animate-in fade-in slide-in-from-top-4">
+            <h3 className="text-[10px] uppercase tracking-[0.3em] text-amber-500 mb-4 font-bold">Resultados para: {searchQuery}</h3>
+            <div className="grid md:grid-cols-2 gap-x-12">
+              {searchResults.length > 0 ? searchResults.map((item, i) => renderItem(item, i, 'search')) : <p className="text-zinc-500 text-xs italic">No se encontraron platos.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Navegación de Categorías */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12 no-print">
+          {admin.menu.map(cat => (
+            <button 
+              key={cat.id} 
+              onClick={() => setActiveTab(cat.id)}
+              className={`px-5 py-2 text-[10px] uppercase font-bold tracking-widest rounded-full border transition-all ${activeTab === cat.id ? 'bg-amber-600 border-amber-500 text-white' : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}
             >
-              {category.name}
+              {cat.name} {cat.items.length > 0 && <span className="ml-1 opacity-50">({cat.items.length})</span>}
             </button>
           ))}
         </div>
 
-        {/* Platos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-12">
-          {activeCategory?.items.map((item, idx) => (
-            <div key={idx} className="group relative flex gap-6 items-start">
-              <div className="w-24 h-24 shrink-0 overflow-hidden bg-zinc-800 border border-zinc-700">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-700"><Camera size={24} /></div>
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h4 className="text-lg font-bold text-zinc-100 uppercase tracking-tight">{item.name}</h4>
-                  <span className="text-amber-500 font-serif italic text-sm">{item.price}</span>
-                </div>
-                <p className="text-zinc-500 text-sm leading-snug font-light italic">{item.desc}</p>
-                
-                {admin.isAdmin && (
-                  <div className="mt-3 flex gap-2 no-print">
-                    <button onClick={() => setEditingItem({ catId: activeTab, idx, ...item })} className="p-2 bg-zinc-800 text-amber-500 hover:bg-zinc-700 transition-colors"><Edit2 size={14} /></button>
-                    <button onClick={() => handleDeleteItem(activeTab, idx)} className="p-2 bg-zinc-800 text-red-500 hover:bg-red-900/20 transition-colors"><Trash2 size={14} /></button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {admin.isAdmin && (
-            <button onClick={() => handleAddItem(activeTab)} className="border-2 border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center gap-2 hover:border-amber-500/50 transition-colors no-print">
-              <Plus className="text-zinc-600" size={32} />
-              <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-600">Agregar nuevo plato</span>
+        {/* Grilla de Platos */}
+        <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 gap-8' : 'grid-cols-1 gap-0'}`}>
+          {activeCategory?.items.map((item, idx) => renderItem(item, idx, activeTab))}
+          
+          {admin.isAdmin && activeCategory && (
+            <button onClick={() => handleAddItem(activeTab)} className="border border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center gap-2 hover:border-amber-500/50 text-zinc-600 hover:text-amber-500 transition-all no-print">
+              <Plus size={24} />
+              <span className="text-[10px] uppercase font-bold tracking-widest">Nuevo Plato en {activeCategory.name}</span>
             </button>
           )}
         </div>
-
-        <div className="mt-24 text-center p-12 border border-zinc-800/50 bg-zinc-950/30 no-print">
-          <button 
-            onClick={handleDownload}
-            className="px-12 py-4 bg-amber-600 hover:bg-amber-700 text-white font-bold uppercase tracking-widest text-xs transition-all shadow-xl flex items-center gap-3 mx-auto"
-          >
-            <Download size={18} /> Descargar Carta PDF
-          </button>
-        </div>
       </div>
 
-      {/* MODAL DE EDICIÓN CON VALIDACIÓN DE PRECIO PERFECTA */}
+      {/* Editor Modal Pro */}
       {editingItem && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-xl p-8 shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-bold uppercase tracking-widest text-amber-500">Editar Plato</h3>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl p-8 shadow-2xl my-auto">
+            <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
+              <h3 className="text-xl font-bold serif text-amber-500 italic">Configuración del Plato</h3>
               <button onClick={() => setEditingItem(null)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
             </div>
+            
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Nombre</label>
-                  <input type="text" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-black border border-zinc-800 p-3 text-white outline-none focus:border-amber-500" />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Nombre del Plato</label>
+                    <input type="text" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm focus:border-amber-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Precio Base</label>
+                    <input type="text" value={editingItem.price} onChange={e => handlePriceChange(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm font-bold text-amber-500 focus:border-amber-500 outline-none" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Precio (Números Solamente)</label>
-                  <div className="relative">
-                    <input 
-                      ref={priceInputRef}
-                      type="text" 
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={editingItem.price} 
-                      onChange={e => handlePriceChange(e.target.value)} 
-                      onFocus={handlePriceFocus}
-                      onClick={handlePriceClick}
-                      onKeyDown={(e) => {
-                        // Impedimos mover el cursor hacia la izquierda con las flechas para proteger el "$"
-                        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'Home') {
-                          // e.preventDefault(); // Opcional: descomentar si se quiere bloquear totalmente el movimiento
-                        }
-                      }}
-                      placeholder="$0"
-                      className="w-full bg-black border border-zinc-800 p-3 text-amber-500 font-bold outline-none focus:border-amber-500" 
-                    />
+                <div className="space-y-4">
+                  <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-sm">
+                    <label className="flex items-center gap-3 cursor-pointer group mb-4">
+                      <input type="checkbox" checked={editingItem.hasSide} onChange={e => setEditingItem({...editingItem, hasSide: e.target.checked})} className="hidden" />
+                      <div className={`w-5 h-5 border flex items-center justify-center transition-all ${editingItem.hasSide ? 'bg-amber-600 border-amber-500' : 'border-zinc-700'}`}>
+                        {editingItem.hasSide && <Plus size={14} />}
+                      </div>
+                      <span className="text-[10px] uppercase font-bold text-zinc-300">¿Incluye Guarnición?</span>
+                    </label>
+                    {editingItem.hasSide && (
+                      <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                        <input type="text" placeholder="Ej: Papas Fritas o Ensalada" value={editingItem.sideName} onChange={e => setEditingItem({...editingItem, sideName: e.target.value})} className="w-full bg-black border border-zinc-800 p-2 text-xs outline-none focus:border-amber-500" />
+                        <input type="text" placeholder="Precio Extra (o $0)" value={editingItem.sidePrice} onChange={e => handlePriceChange(e.target.value, true)} className="w-full bg-black border border-zinc-800 p-2 text-xs text-amber-500 outline-none focus:border-amber-500" />
+                        <p className="text-[9px] text-zinc-500 italic">Si el precio es $0, se mostrará en el título. Si tiene precio, se sumará al total.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+              
               <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Imagen</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Imagen (URL o Archivo)</label>
                 <div className="flex gap-2">
-                  <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-zinc-800 p-3 text-[10px] uppercase font-bold hover:bg-zinc-700">Subir Foto</button>
-                  <button onClick={() => setEditingItem({...editingItem, image: prompt('URL de imagen:') || ''})} className="flex-1 bg-zinc-800 p-3 text-[10px] uppercase font-bold hover:bg-zinc-700">Usar Link</button>
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                  <input type="text" value={editingItem.image} onChange={e => setEditingItem({...editingItem, image: e.target.value})} placeholder="https://..." className="flex-1 bg-zinc-900 border border-zinc-800 p-3 text-xs outline-none" />
+                  <button onClick={() => fileInputRef.current?.click()} className="bg-zinc-800 px-4 hover:bg-zinc-700"><Camera size={18} /></button>
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      const r = new FileReader();
+                      r.onload = () => setEditingItem({...editingItem, image: r.result as string});
+                      r.readAsDataURL(f);
+                    }
+                  }} />
                 </div>
               </div>
+
               <div>
                 <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Descripción</label>
-                <textarea value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} rows={3} className="w-full bg-black border border-zinc-800 p-3 text-white outline-none focus:border-amber-500 resize-none" />
+                <textarea value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} rows={2} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-xs outline-none focus:border-amber-500" />
               </div>
             </div>
-            <div className="mt-8 flex justify-end gap-4">
-              <button onClick={() => setEditingItem(null)} className="px-6 py-3 text-zinc-500 text-xs font-bold uppercase">Cerrar</button>
-              <button onClick={handleSaveEdit} className="px-10 py-3 bg-amber-600 text-white text-xs font-bold uppercase hover:bg-amber-500">Guardar Cambios</button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* MODAL DE PUBLICACIÓN */}
-      {showExportModal && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/95">
-          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-3xl flex flex-col h-[80vh] shadow-2xl">
-            <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/50">
-              <h3 className="text-xl font-bold text-amber-500 uppercase tracking-widest">Publicar Cambios Permanentes</h3>
-              <button onClick={() => setShowExportModal(false)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
+            <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-zinc-900">
+              <button onClick={() => setEditingItem(null)} className="px-6 py-3 text-zinc-500 text-xs font-bold uppercase hover:text-white">Cancelar</button>
+              <button onClick={handleSaveEdit} className="px-10 py-3 bg-amber-600 text-white text-xs font-bold uppercase hover:bg-amber-500 shadow-xl shadow-amber-900/20">Aplicar Cambios</button>
             </div>
-            <div className="flex-1 p-6 overflow-hidden">
-              <textarea 
-                readOnly 
-                value={generateGithubCode()}
-                className="w-full h-full bg-black text-green-500 font-mono text-xs p-6 border border-zinc-800 rounded outline-none resize-none"
-              />
-            </div>
-            <div className="p-6 border-t border-zinc-800 flex justify-between items-center">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Versión actual: {APP_VERSION}</p>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(generateGithubCode());
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-                className="px-8 py-3 bg-white text-black font-bold text-xs uppercase flex items-center gap-2 hover:bg-zinc-200"
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-                {copied ? '¡Copiado!' : 'Copiar Código'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showToast && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[200]">
-          <div className="bg-white text-black px-10 py-6 shadow-2xl flex flex-col items-center gap-4">
-            <Loader2 className="animate-spin text-amber-600" size={32} />
-            <p className="font-bold uppercase tracking-[0.2em] text-xs">Preparando Impresión...</p>
           </div>
         </div>
       )}
