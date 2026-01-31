@@ -49,7 +49,6 @@ const MenuSection: React.FC = () => {
     admin.updateMenu(admin.menu.map(cat => cat.id === catId ? { ...cat, items: [...cat.items, newItem] } : cat));
   };
 
-  // ESTA FUNCIÓN CUMPLE EL REQUISITO DE BORRAR AL CLICKEAR
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof EditingItem) => {
     if (!editingItem) return;
     const val = String(editingItem[field]);
@@ -99,6 +98,8 @@ const MenuSection: React.FC = () => {
     const sidePriceNum = hasSide ? parseInt(item.side?.price.replace(/\D/g, '') || '0') : 0;
     const mainPriceNum = parseInt(item.price.replace(/\D/g, '') || '0');
     const totalPrice = sidePriceNum > 0 ? `$${mainPriceNum + sidePriceNum}` : item.price;
+    
+    // Si la guarnición vale $0, la incluimos en el título
     const displayName = sidePriceNum === 0 && hasSide ? `${item.name} (con ${item.side.name})` : item.name;
 
     if (viewMode === 'list') {
@@ -154,7 +155,7 @@ const MenuSection: React.FC = () => {
   return (
     <section id="menu" className="py-24 bg-zinc-950">
       <div className="max-w-6xl mx-auto px-4">
-        {/* BUSCADOR Y CONTROLES */}
+        {/* BUSCADOR CON PRECIO INLINE */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 no-print">
           <h2 className="text-3xl font-bold serif flex items-center gap-3">
             <UtensilsCrossed className="text-amber-500" size={24} /> Nuestra Carta
@@ -165,7 +166,7 @@ const MenuSection: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
               <input 
                 type="text" 
-                placeholder="Escribe el nombre del plato..."
+                placeholder="Buscar plato (ej: Milanesa)..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-full py-2.5 pl-10 pr-4 text-xs focus:border-amber-500 outline-none transition-all placeholder:text-zinc-600"
@@ -178,24 +179,24 @@ const MenuSection: React.FC = () => {
                       <span className="text-xs text-amber-500 font-bold ml-4">{item.price}</span>
                     </div>
                   )) : (
-                    <div className="p-4 text-xs text-zinc-500 italic text-center">No se encontraron resultados</div>
+                    <div className="p-4 text-xs text-zinc-500 italic text-center">Sin resultados</div>
                   )}
                 </div>
               )}
             </div>
 
             <div className="flex bg-zinc-900 p-1 rounded-sm border border-zinc-800">
-              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-sm transition-all ${viewMode === 'grid' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`} title="Con Fotos"><LayoutGrid size={16} /></button>
-              <button onClick={() => setViewMode('list')} className={`p-2 rounded-sm transition-all ${viewMode === 'list' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`} title="Sin Fotos"><List size={16} /></button>
+              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-sm transition-all ${viewMode === 'grid' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`} title="Grilla con Fotos"><LayoutGrid size={16} /></button>
+              <button onClick={() => setViewMode('list')} className={`p-2 rounded-sm transition-all ${viewMode === 'list' ? 'bg-amber-600 text-white' : 'text-zinc-500 hover:text-white'}`} title="Lista sin Fotos"><List size={16} /></button>
             </div>
 
-            <button onClick={() => window.print()} className="p-2 text-zinc-500 hover:text-amber-500 border border-zinc-800 rounded-sm" title="Guardar PDF">
+            <button onClick={() => window.print()} className="p-2 text-zinc-500 hover:text-amber-500 border border-zinc-800 rounded-sm" title="Descargar PDF">
               <FileDown size={18} />
             </button>
           </div>
         </div>
 
-        {/* TABS DE CATEGORÍAS */}
+        {/* TABS CATEGORÍAS */}
         <div className="flex flex-wrap justify-center gap-2 mb-12 no-print">
           {admin.menu.map(cat => (
             <button 
@@ -208,29 +209,29 @@ const MenuSection: React.FC = () => {
           ))}
         </div>
 
-        {/* LISTADO DINÁMICO */}
+        {/* CONTENIDO DEL MENÚ */}
         <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 gap-8' : 'grid-cols-1 gap-0'}`}>
           {activeCategory?.items.length ? activeCategory.items.map((item, idx) => renderItem(item, idx, activeTab)) : (
             <div className="col-span-full py-12 text-center text-zinc-600 italic text-sm">
-              Esta categoría se encuentra vacía.
+              Esta categoría está vacía. {admin.isAdmin && "Pulsa el botón + para agregar platos."}
             </div>
           )}
           
           {admin.isAdmin && activeCategory && (
             <button onClick={() => handleAddItem(activeTab)} className="border border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center gap-2 hover:border-amber-500/50 text-zinc-600 hover:text-amber-500 transition-all no-print rounded-sm">
               <Plus size={24} />
-              <span className="text-[10px] uppercase font-bold tracking-widest">Añadir Plato</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest">Nuevo Plato</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* EDITOR MODAL */}
+      {/* MODAL EDITOR CON LIMPIEZA AUTOMÁTICA */}
       {editingItem && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm overflow-y-auto">
           <div className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl p-8 shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
-              <h3 className="text-xl font-bold serif text-amber-500 italic">Editor del Menú</h3>
+              <h3 className="text-xl font-bold serif text-amber-500 italic">Editor de Menú</h3>
               <button onClick={() => setEditingItem(null)} className="text-zinc-500 hover:text-white"><X size={24} /></button>
             </div>
             
@@ -238,12 +239,12 @@ const MenuSection: React.FC = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">Nombre del Plato</label>
-                    <input type="text" value={editingItem.name} onFocus={(e) => handleInputFocus(e, 'name')} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm focus:border-amber-500 outline-none transition-all" />
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">Nombre</label>
+                    <input type="text" value={editingItem.name} onFocus={(e) => handleInputFocus(e, 'name')} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm focus:border-amber-500 outline-none" />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">Precio Base</label>
-                    <input type="text" value={editingItem.price} onFocus={(e) => handleInputFocus(e, 'price')} onChange={e => handlePriceChange(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm font-bold text-amber-500 focus:border-amber-500 outline-none transition-all" />
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">Precio</label>
+                    <input type="text" value={editingItem.price} onFocus={(e) => handleInputFocus(e, 'price')} onChange={e => handlePriceChange(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm font-bold text-amber-500 focus:border-amber-500 outline-none" />
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -253,11 +254,11 @@ const MenuSection: React.FC = () => {
                       <div className={`w-5 h-5 border flex items-center justify-center transition-all ${editingItem.hasSide ? 'bg-amber-600 border-amber-500' : 'border-zinc-700'}`}>
                         {editingItem.hasSide && <Plus size={14} className="text-white" />}
                       </div>
-                      <span className="text-[10px] uppercase font-bold text-zinc-300 group-hover:text-amber-500">¿Lleva Guarnición?</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-300 group-hover:text-amber-500">¿Tiene Guarnición?</span>
                     </label>
                     {editingItem.hasSide && (
                       <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
-                        <input type="text" placeholder="Ej: Papas Fritas o Ensalada" value={editingItem.sideName} onFocus={(e) => handleInputFocus(e, 'sideName')} onChange={e => setEditingItem({...editingItem, sideName: e.target.value})} className="w-full bg-black border border-zinc-800 p-2 text-xs outline-none focus:border-amber-500" />
+                        <input type="text" placeholder="Guarnición (ej: Papas)" value={editingItem.sideName} onFocus={(e) => handleInputFocus(e, 'sideName')} onChange={e => setEditingItem({...editingItem, sideName: e.target.value})} className="w-full bg-black border border-zinc-800 p-2 text-xs outline-none focus:border-amber-500" />
                         <input type="text" placeholder="Precio Extra (o $0)" value={editingItem.sidePrice} onFocus={(e) => handleInputFocus(e, 'sidePrice')} onChange={e => handlePriceChange(e.target.value, true)} className="w-full bg-black border border-zinc-800 p-2 text-xs text-amber-500 outline-none focus:border-amber-500" />
                       </div>
                     )}
@@ -266,7 +267,7 @@ const MenuSection: React.FC = () => {
               </div>
               
               <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">URL de la Imagen</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2 tracking-widest">Imagen (Link)</label>
                 <input type="text" value={editingItem.image} onChange={e => setEditingItem({...editingItem, image: e.target.value})} placeholder="https://..." className="w-full bg-zinc-900 border border-zinc-800 p-3 text-xs outline-none focus:border-amber-500" />
               </div>
 
@@ -277,8 +278,8 @@ const MenuSection: React.FC = () => {
             </div>
 
             <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-zinc-900">
-              <button onClick={() => setEditingItem(null)} className="px-6 py-3 text-zinc-500 text-xs font-bold uppercase hover:text-white transition-colors">Cancelar</button>
-              <button onClick={handleSaveEdit} className="px-10 py-3 bg-amber-600 text-white text-xs font-bold uppercase hover:bg-amber-500 shadow-xl shadow-amber-900/20 transition-all active:scale-95">Aplicar Cambios</button>
+              <button onClick={() => setEditingItem(null)} className="px-6 py-3 text-zinc-500 text-xs font-bold uppercase hover:text-white">Cancelar</button>
+              <button onClick={handleSaveEdit} className="px-10 py-3 bg-amber-600 text-white text-xs font-bold uppercase hover:bg-amber-500 shadow-xl shadow-amber-900/20 active:scale-95 transition-all">Guardar</button>
             </div>
           </div>
         </div>
