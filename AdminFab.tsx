@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { Lock, Key, RotateCcw, RotateCw, Save, X, ShieldCheck, Mail } from 'lucide-react';
+import { Lock, Key, RotateCcw, RotateCw, Save, X, ShieldCheck, Mail, Github } from 'lucide-react';
 import { AdminContext } from '../App';
 
 const AdminFab: React.FC = () => {
@@ -70,7 +70,7 @@ const AdminFab: React.FC = () => {
             onClick={() => window.dispatchEvent(new CustomEvent('open-github-export'))}
             className="flex items-center gap-3 bg-amber-600 text-white px-8 py-4 rounded-sm shadow-2xl hover:bg-amber-500 font-bold text-[10px] uppercase tracking-[0.3em] transition-all"
           >
-            <Save size={18} /> Guardar Permaneciendo
+            <Save size={18} /> Publicar en GitHub
           </button>
 
           <button 
