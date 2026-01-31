@@ -16,7 +16,7 @@ const AdminFab: React.FC = () => {
     if (admin.isAdmin) {
       setIsOpen(!isOpen);
     } else {
-      const pass = prompt('INGRESE CLAVE MAESTRA:');
+      const pass = prompt('INGRESE CLAVE DE ACCESO:');
       if (pass === admin.password) {
         admin.setIsAdmin(true);
         setIsOpen(true);
@@ -27,16 +27,16 @@ const AdminFab: React.FC = () => {
   };
 
   const handleRequestPasswordChange = () => {
-    const requestedPass = prompt('Ingrese la nueva clave deseada:');
+    const requestedPass = prompt('Nueva contraseña deseada:');
     if (!requestedPass) return;
 
-    const subject = encodeURIComponent(`Cambio de Clave solicitado - ${RESTAURANT_DATA.name}`);
+    const subject = encodeURIComponent(`Solicitud Cambio de Clave - ${RESTAURANT_DATA.name}`);
     const body = encodeURIComponent(
-      `Hola Ignacio,\n\nSe ha solicitado cambiar la clave del administrador.\n\nClave actual: ${admin.password}\nNueva clave propuesta: ${requestedPass}\n\nResponde este correo aceptando el cambio.`
+      `Hola Ignacio,\n\nSolicito cambiar la clave del administrador.\n\nClave actual: ${admin.password}\nNueva clave propuesta: ${requestedPass}\n\nEspero tu confirmación.`
     );
     
     window.location.href = `mailto:ignaciogrizzo@gmail.com?subject=${subject}&body=${body}`;
-    alert('Mail preparado para ignaciogrizzo@gmail.com.');
+    alert('Se ha preparado un mail para ignaciogrizzo@gmail.com.');
   };
 
   const publishToGithub = async () => {
@@ -46,7 +46,7 @@ const AdminFab: React.FC = () => {
 
     if (!token || !repo) {
       setShowSettings(true);
-      alert('Configura primero el Repositorio y Token en los ajustes.');
+      alert('Configura el Repo y Token en los ajustes (icono de engranaje).');
       return;
     }
 
@@ -56,7 +56,7 @@ const AdminFab: React.FC = () => {
         headers: { 'Authorization': `token ${token}` }
       });
       
-      if (!getRes.ok) throw new Error('No se encontró el archivo en GitHub.');
+      if (!getRes.ok) throw new Error('No se encontró el archivo. Revisa usuario/repo.');
       const fileData = await getRes.json();
       const sha = fileData.sha;
 
@@ -101,7 +101,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
       });
 
       if (putRes.ok) {
-        alert('¡Web actualizada con éxito!');
+        alert('¡Publicación exitosa! Los cambios estarán en línea en unos minutos.');
       } else {
         const error = await putRes.json();
         throw new Error(error.message);
@@ -119,16 +119,18 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
         <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-6 duration-300">
           
           {showSettings && (
-            <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-sm shadow-2xl w-72 animate-in fade-in zoom-in-95">
-              <h4 className="text-[10px] uppercase font-bold text-amber-500 mb-4 tracking-widest">Ajustes de Sincronización</h4>
+            <div className="bg-zinc-900 border border-amber-500/50 p-5 rounded-sm shadow-2xl w-72 animate-in fade-in zoom-in-95">
+              <h4 className="text-[10px] uppercase font-bold text-amber-500 mb-4 tracking-widest flex items-center gap-2">
+                <Settings size={12} /> GitHub Sync
+              </h4>
               <div className="space-y-4">
                 <div>
-                  <label className="text-[9px] text-zinc-500 uppercase font-bold mb-1 block">Repo (usuario/repositorio)</label>
-                  <input type="text" defaultValue={localStorage.getItem('maral_gh_repo') || ''} onBlur={e => localStorage.setItem('maral_gh_repo', e.target.value)} className="w-full bg-black border border-zinc-800 p-2 text-[10px] text-white outline-none focus:border-amber-500" />
+                  <label className="text-[9px] text-zinc-500 uppercase block mb-1">Repositorio (usuario/repo)</label>
+                  <input type="text" placeholder="ignacio/maral-web" defaultValue={localStorage.getItem('maral_gh_repo') || ''} onBlur={e => localStorage.setItem('maral_gh_repo', e.target.value)} className="w-full bg-black border border-zinc-800 p-2 text-[10px] text-white outline-none focus:border-amber-500" />
                 </div>
                 <div>
-                  <label className="text-[9px] text-zinc-500 uppercase font-bold mb-1 block">GitHub Token</label>
-                  <input type="password" defaultValue={localStorage.getItem('maral_gh_token') || ''} onBlur={e => localStorage.setItem('maral_gh_token', e.target.value)} className="w-full bg-black border border-zinc-800 p-2 text-[10px] text-white outline-none focus:border-amber-500" />
+                  <label className="text-[9px] text-zinc-500 uppercase block mb-1">Token de GitHub</label>
+                  <input type="password" placeholder="ghp_xxxx..." defaultValue={localStorage.getItem('maral_gh_token') || ''} onBlur={e => localStorage.setItem('maral_gh_token', e.target.value)} className="w-full bg-black border border-zinc-800 p-2 text-[10px] text-white outline-none focus:border-amber-500" />
                 </div>
               </div>
             </div>
@@ -139,10 +141,10 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
           </button>
           
           <div className="flex gap-2 w-full">
-            <button onClick={admin.undo} disabled={!admin.canUndo} className={`flex-1 p-4 rounded-sm border flex justify-center transition-all ${admin.canUndo ? 'bg-zinc-800 text-amber-500 border-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`} title="Deshacer">
+            <button onClick={admin.undo} disabled={!admin.canUndo} className={`flex-1 p-4 rounded-sm border flex justify-center transition-all ${admin.canUndo ? 'bg-zinc-800 text-amber-500 border-zinc-700 hover:bg-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`} title="Deshacer (Undo)">
               <RotateCcw size={18} />
             </button>
-            <button onClick={admin.redo} disabled={!admin.canRedo} className={`flex-1 p-4 rounded-sm border flex justify-center transition-all ${admin.canRedo ? 'bg-zinc-800 text-amber-500 border-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`} title="Rehacer">
+            <button onClick={admin.redo} disabled={!admin.canRedo} className={`flex-1 p-4 rounded-sm border flex justify-center transition-all ${admin.canRedo ? 'bg-zinc-800 text-amber-500 border-zinc-700 hover:bg-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`} title="Rehacer (Redo)">
               <RotateCw size={18} />
             </button>
           </div>
@@ -153,7 +155,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
             </button>
             <button onClick={publishToGithub} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-3 bg-amber-600 text-white px-6 py-4 rounded-sm shadow-2xl hover:bg-amber-500 font-bold text-[10px] uppercase tracking-[0.3em] transition-all disabled:opacity-50">
               {isSyncing ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
-              {isSyncing ? 'Guardando...' : 'Publicar Web'}
+              {isSyncing ? 'Subiendo...' : 'Publicar Web'}
             </button>
           </div>
 
