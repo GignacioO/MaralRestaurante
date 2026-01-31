@@ -2,7 +2,7 @@
 import React, { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { AdminContext } from '../App';
 import { Plus, Edit2, Trash2, FileDown, Camera, X, LayoutGrid, List, Search, UtensilsCrossed } from 'lucide-react';
-import { APP_VERSION, RESTAURANT_DATA, INITIAL_MENU } from '../constants';
+import { RESTAURANT_DATA } from '../constants';
 
 interface EditingItem {
   catId: string;
@@ -23,7 +23,6 @@ const MenuSection: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (admin?.menu.length && !activeTab) {
@@ -37,7 +36,7 @@ const MenuSection: React.FC = () => {
     admin?.menu.forEach(cat => {
       cat.items.forEach(item => {
         if (item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-          results.push({ ...item, catName: cat.name });
+          results.push({ ...item, catId: cat.id, idx: cat.items.indexOf(item) });
         }
       });
     });
@@ -59,20 +58,14 @@ const MenuSection: React.FC = () => {
     else setEditingItem({ ...editingItem, price: formatted });
   };
 
-  // Función para limpiar texto predeterminado al hacer click/foco
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof EditingItem) => {
     if (!editingItem) return;
     const val = String(editingItem[field]);
     const defaults = ['Nuevo Plato', '$0', 'Descripción...', 'Ej: Papas Fritas o Ensalada', '$'];
     
     if (defaults.includes(val) || val.trim() === '') {
-      if (field === 'price' || field === 'sidePrice') {
-        setEditingItem({ ...editingItem, [field]: '$' });
-      } else {
-        setEditingItem({ ...editingItem, [field]: '' });
-      }
+      setEditingItem({ ...editingItem, [field]: field === 'price' || field === 'sidePrice' ? '$' : '' });
     } else {
-      // Si no es un default, seleccionamos todo el texto para facilitar reemplazo
       e.target.select();
     }
   };
@@ -112,12 +105,12 @@ const MenuSection: React.FC = () => {
 
     if (viewMode === 'list') {
       return (
-        <div key={idx} className="py-4 border-b border-zinc-900 group relative">
+        <div key={`${catId}-${idx}`} className="py-4 border-b border-zinc-900 group relative">
           <div className="flex justify-between items-baseline gap-4">
             <div className="flex-1">
               <h4 className="text-zinc-100 font-bold uppercase tracking-tight text-sm">
                 {displayName}
-                {sidePriceNum > 0 && <span className="ml-2 text-[10px] text-amber-500 font-normal">+ {item.side.name}</span>}
+                {sidePriceNum > 0 && <span className="ml-2 text-[10px] text-amber-500 font-normal tracking-wider">+ {item.side.name}</span>}
               </h4>
               <p className="text-zinc-500 text-xs mt-1 font-light italic">{item.desc}</p>
             </div>
@@ -136,7 +129,7 @@ const MenuSection: React.FC = () => {
     }
 
     return (
-      <div key={idx} className="group flex gap-4 items-start bg-zinc-900/20 p-4 rounded-sm border border-transparent hover:border-zinc-800 transition-all">
+      <div key={`${catId}-${idx}`} className="group flex gap-4 items-start bg-zinc-900/20 p-4 rounded-sm border border-transparent hover:border-zinc-800 transition-all">
         <div className="w-20 h-20 shrink-0 bg-zinc-800 overflow-hidden">
           {item.image ? <img src={item.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-zinc-700"><Camera size={20} /></div>}
         </div>
@@ -161,7 +154,6 @@ const MenuSection: React.FC = () => {
   return (
     <section id="menu" className="py-24 bg-zinc-950">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Header de Sección con Buscador */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 no-print">
           <div>
             <h2 className="text-3xl font-bold serif flex items-center gap-3">
@@ -188,17 +180,15 @@ const MenuSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Resultados de Búsqueda */}
         {searchQuery && (
           <div className="mb-12 bg-zinc-900/30 p-6 border border-amber-500/20 animate-in fade-in slide-in-from-top-4">
             <h3 className="text-[10px] uppercase tracking-[0.3em] text-amber-500 mb-4 font-bold">Resultados para: {searchQuery}</h3>
             <div className="grid md:grid-cols-2 gap-x-12">
-              {searchResults.length > 0 ? searchResults.map((item, i) => renderItem(item, i, 'search')) : <p className="text-zinc-500 text-xs italic">No se encontraron platos.</p>}
+              {searchResults.length > 0 ? searchResults.map((item) => renderItem(item, item.idx, item.catId)) : <p className="text-zinc-500 text-xs italic">No se encontraron platos.</p>}
             </div>
           </div>
         )}
 
-        {/* Navegación de Categorías */}
         <div className="flex flex-wrap justify-center gap-2 mb-12 no-print">
           {admin.menu.map(cat => (
             <button 
@@ -211,7 +201,6 @@ const MenuSection: React.FC = () => {
           ))}
         </div>
 
-        {/* Grilla de Platos */}
         <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 gap-8' : 'grid-cols-1 gap-0'}`}>
           {activeCategory?.items.map((item, idx) => renderItem(item, idx, activeTab))}
           
@@ -224,7 +213,6 @@ const MenuSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Editor Modal Pro */}
       {editingItem && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm overflow-y-auto">
           <div className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl p-8 shadow-2xl my-auto">
@@ -284,7 +272,6 @@ const MenuSection: React.FC = () => {
                           onChange={e => handlePriceChange(e.target.value, true)} 
                           className="w-full bg-black border border-zinc-800 p-2 text-xs text-amber-500 outline-none focus:border-amber-500" 
                         />
-                        <p className="text-[9px] text-zinc-500 italic">Si el precio es $0, se mostrará en el título. Si tiene precio, se sumará al total.</p>
                       </div>
                     )}
                   </div>
