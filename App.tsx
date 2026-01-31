@@ -7,6 +7,7 @@ import MenuSection from './components/MenuSection';
 import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import AdminFab from './components/AdminFab';
 import { INITIAL_MENU, MenuCategory, APP_VERSION } from './constants';
 
 interface AdminContextType {
@@ -42,48 +43,27 @@ const DEFAULT_CONTENT = {
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [password, setPassword] = useState(() => {
-    return localStorage.getItem('maral_pass') || 'admin123';
-  });
-  
+  const [password, setPassword] = useState(() => localStorage.getItem('maral_pass') || 'admin123');
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedMenu = localStorage.getItem('maral_menu');
-    
-    // Si la versión guardada es distinta a la del código, forzamos el menú inicial
-    if (savedVersion !== APP_VERSION) {
-      return INITIAL_MENU;
-    }
-    return savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU;
+    return (savedVersion !== APP_VERSION) ? INITIAL_MENU : (savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU);
   });
-
   const [content, setContent] = useState(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedContent = localStorage.getItem('maral_content');
-    
-    if (savedVersion !== APP_VERSION) {
-      return DEFAULT_CONTENT;
-    }
-    return savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT;
+    return (savedVersion !== APP_VERSION) ? DEFAULT_CONTENT : (savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT);
   });
 
-  // History state for Undo/Redo
   const [past, setPast] = useState<MenuCategory[][]>([]);
   const [future, setFuture] = useState<MenuCategory[][]>([]);
 
   useEffect(() => {
     localStorage.setItem('maral_menu', JSON.stringify(menu));
-    localStorage.setItem('maral_version', APP_VERSION);
-  }, [menu]);
-
-  useEffect(() => {
     localStorage.setItem('maral_content', JSON.stringify(content));
     localStorage.setItem('maral_version', APP_VERSION);
-  }, [content]);
-
-  useEffect(() => {
     localStorage.setItem('maral_pass', password);
-  }, [password]);
+  }, [menu, content, password]);
 
   const updateMenu = (newMenu: MenuCategory[]) => {
     setPast(prev => [...prev, menu]);
@@ -94,40 +74,27 @@ function App() {
   const undo = () => {
     if (past.length === 0) return;
     const previous = past[past.length - 1];
-    const newPast = past.slice(0, past.length - 1);
     setFuture(prev => [menu, ...prev]);
-    setPast(newPast);
+    setPast(past.slice(0, -1));
     setMenu(previous);
   };
 
   const redo = () => {
     if (future.length === 0) return;
     const next = future[0];
-    const newFuture = future.slice(1);
     setPast(prev => [...prev, menu]);
-    setFuture(newFuture);
+    setFuture(future.slice(1));
     setMenu(next);
   };
 
-  const updatePassword = (newPass: string) => setPassword(newPass);
-  const updateContent = (newContent: any) => setContent({ ...content, ...newContent });
-
   return (
     <AdminContext.Provider value={{ 
-      isAdmin, 
-      setIsAdmin, 
-      menu, 
-      updateMenu, 
-      undo,
-      redo,
-      canUndo: past.length > 0,
-      canRedo: future.length > 0,
-      password, 
-      updatePassword,
-      content,
-      updateContent
+      isAdmin, setIsAdmin, menu, updateMenu, undo, redo,
+      canUndo: past.length > 0, canRedo: future.length > 0,
+      password, updatePassword: setPassword,
+      content, updateContent: (newC: any) => setContent({...content, ...newC})
     }}>
-      <div className="min-h-screen bg-zinc-950">
+      <div className="min-h-screen bg-zinc-950 text-zinc-100">
         <Navbar />
         <main>
           <Hero />
@@ -137,6 +104,7 @@ function App() {
           <Contact />
         </main>
         <Footer />
+        <AdminFab />
       </div>
     </AdminContext.Provider>
   );
