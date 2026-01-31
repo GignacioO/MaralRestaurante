@@ -66,6 +66,18 @@ export const INITIAL_MENU: MenuCategory[] = [
         "price": "Consultar",
         "desc": "Descripción del plato...",
         "image": ""
+      },
+      {
+        "name": "Nuevo Plato",
+        "price": "Consultar",
+        "desc": "Descripción del plato...",
+        "image": ""
+      },
+      {
+        "name": "Nuevo Plato",
+        "price": "Consultar",
+        "desc": "Descripción del plato...",
+        "image": ""
       }
     ]
   },
