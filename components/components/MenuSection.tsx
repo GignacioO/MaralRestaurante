@@ -21,6 +21,7 @@ const MenuSection: React.FC = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleOpenExport = () => setShowExportModal(true);
@@ -73,6 +74,33 @@ const MenuSection: React.FC = () => {
     // Siempre mantenemos el signo $, si no hay números ponemos solo el $
     const formattedPrice = numbersOnly === '' ? '$' : `$${numbersOnly}`;
     setEditingItem({ ...editingItem, price: formattedPrice });
+  };
+
+  const handlePriceFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (!editingItem) return;
+    
+    if (editingItem.price === '$0') {
+      // Si es el valor por defecto, lo dejamos solo en "$" para que escriba directo
+      setEditingItem({ ...editingItem, price: '$' });
+    } else {
+      // Si ya tiene precio, movemos el cursor al final
+      const val = e.target.value;
+      // Pequeño delay para asegurar que el navegador no resetee el cursor
+      setTimeout(() => {
+        if (priceInputRef.current) {
+          const len = priceInputRef.current.value.length;
+          priceInputRef.current.setSelectionRange(len, len);
+        }
+      }, 0);
+    }
+  };
+
+  const handlePriceClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    // Al hacer clic, siempre forzamos el cursor al final si ya tiene contenido
+    if (priceInputRef.current) {
+      const len = priceInputRef.current.value.length;
+      priceInputRef.current.setSelectionRange(len, len);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -192,7 +220,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
         </div>
       </div>
 
-      {/* MODAL DE EDICIÓN CON VALIDACIÓN DE PRECIO */}
+      {/* MODAL DE EDICIÓN CON VALIDACIÓN DE PRECIO MEJORADA */}
       {editingItem && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-zinc-900 border border-zinc-800 w-full max-w-xl p-8 shadow-2xl">
@@ -210,9 +238,12 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
                   <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Precio (Números Solamente)</label>
                   <div className="relative">
                     <input 
+                      ref={priceInputRef}
                       type="text" 
                       value={editingItem.price} 
                       onChange={e => handlePriceChange(e.target.value)} 
+                      onFocus={handlePriceFocus}
+                      onClick={handlePriceClick}
                       placeholder="$0"
                       className="w-full bg-black border border-zinc-800 p-3 text-amber-500 font-bold outline-none focus:border-amber-500" 
                     />
