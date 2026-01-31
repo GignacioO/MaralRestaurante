@@ -1,163 +1,95 @@
 
-import React, { useState, useContext, useRef } from 'react';
-import { Lock, Key, RotateCcw, RotateCw, Code, X, ShieldCheck } from 'lucide-react';
+import React, { useState, useContext } from 'react';
+import { Lock, Key, RotateCcw, RotateCw, Save, X, ShieldCheck, Mail } from 'lucide-react';
 import { AdminContext } from '../App';
 
 const AdminFab: React.FC = () => {
   const admin = useContext(AdminContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [isPressing, setIsPressing] = useState(false);
-  const timerRef = useRef<number | null>(null);
 
   if (!admin) return null;
 
-  const handleStartPress = (e: React.MouseEvent | React.TouchEvent) => {
-    // Evitamos que el evento se propague si es necesario
-    setIsPressing(true);
-    timerRef.current = window.setTimeout(() => {
-      triggerLogin();
-      setIsPressing(false);
-    }, 1500); // 1.5 segundos sostenido para entrar
-  };
-
-  const handleEndPress = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    setIsPressing(false);
-  };
-
-  const triggerLogin = () => {
+  const handleLogin = () => {
     if (admin.isAdmin) {
       setIsOpen(!isOpen);
-      return;
-    }
-    const pass = prompt('INGRESE CLAVE MAESTRA (Default: admin123):');
-    if (pass === admin.password) {
-      admin.setIsAdmin(true);
-      setIsOpen(true);
-    } else if (pass !== null) {
-      alert('Clave incorrecta.');
-    }
-  };
-
-  const handleChangePassword = () => {
-    const currentPass = prompt('Para cambiar la clave, ingrese la CLAVE ACTUAL:');
-    if (currentPass === admin.password) {
-      const newPass = prompt('Ingrese la NUEVA CLAVE MAESTRA:');
-      if (newPass && newPass.trim().length >= 4) {
-        admin.updatePassword(newPass);
-        alert('¡Éxito! Nueva clave guardada.');
-      } else if (newPass !== null) {
-        alert('La clave debe tener al menos 4 caracteres.');
+    } else {
+      const pass = prompt('INGRESE CLAVE MAESTRA:');
+      if (pass === admin.password) {
+        admin.setIsAdmin(true);
+        setIsOpen(true);
+      } else if (pass !== null) {
+        alert('Clave incorrecta.');
       }
-    } else if (currentPass !== null) {
-      alert('Contraseña actual incorrecta.');
     }
   };
 
-  const handlePublish = () => {
-    window.dispatchEvent(new CustomEvent('open-github-export'));
-    setIsOpen(false);
+  const handleRequestPasswordChange = () => {
+    const current = admin.password;
+    const requested = prompt('Ingrese la nueva clave deseada:');
+    if (!requested) return;
+
+    const subject = encodeURIComponent(`Solicitud de Cambio de Clave - Maral Restaurante`);
+    const body = encodeURIComponent(`Hola Ignacio,\n\nSe ha solicitado un cambio de clave para el panel de administración.\n\nClave Actual: ${current}\nNueva Clave Solicitada: ${requested}\n\nPor favor, responde con "ACEPTO" o "DECLINO" para proceder.`);
+    
+    // Al ser una app estática, usamos mailto para asegurar que el dueño reciba la info real
+    window.location.href = `mailto:ignaciogrizzo@gmail.com?subject=${subject}&body=${body}`;
+    alert('Se ha generado un correo de solicitud para ignaciogrizzo@gmail.com. El cambio se aplicará cuando el dueño lo autorice.');
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] no-print flex flex-col items-end gap-4">
-      {/* Panel de Control (Solo visible si es Admin y está abierto) */}
+    <div className="fixed bottom-8 right-8 z-[200] no-print flex flex-col items-end gap-4">
       {admin.isAdmin && isOpen && (
-        <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-4 duration-300">
+        <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-6 duration-300">
           <button 
-            onClick={handleChangePassword}
-            className="flex items-center gap-3 bg-zinc-900 border border-amber-500/50 px-5 py-3 rounded-full shadow-2xl hover:bg-zinc-800 text-amber-500 text-xs font-bold uppercase tracking-widest transition-all"
+            onClick={handleRequestPasswordChange}
+            className="flex items-center gap-3 bg-zinc-900 border border-amber-500/30 px-5 py-3 rounded-sm shadow-2xl hover:bg-zinc-800 text-amber-500 text-[10px] font-bold uppercase tracking-[0.2em] transition-all"
           >
-            <Key size={18} /> Cambiar Contraseña
+            <Mail size={16} /> Solicitar Nueva Clave
           </button>
           
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button 
               onClick={admin.undo} 
               disabled={!admin.canUndo}
+              className={`p-4 rounded-sm border transition-all ${admin.canUndo ? 'bg-zinc-800 text-amber-500 border-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`}
               title="Deshacer"
-              className={`p-4 rounded-full shadow-2xl transition-all border ${admin.canUndo ? 'bg-zinc-800 text-white border-zinc-600 hover:bg-zinc-700' : 'bg-zinc-900 text-zinc-700 border-zinc-800 cursor-not-allowed'}`}
             >
-              <RotateCcw size={20} />
+              <RotateCcw size={18} />
             </button>
             <button 
               onClick={admin.redo} 
               disabled={!admin.canRedo}
+              className={`p-4 rounded-sm border transition-all ${admin.canRedo ? 'bg-zinc-800 text-amber-500 border-zinc-700' : 'bg-zinc-900 text-zinc-800 border-zinc-900 opacity-50 cursor-not-allowed'}`}
               title="Rehacer"
-              className={`p-4 rounded-full shadow-2xl transition-all border ${admin.canRedo ? 'bg-zinc-800 text-white border-zinc-600 hover:bg-zinc-700' : 'bg-zinc-900 text-zinc-700 border-zinc-800 cursor-not-allowed'}`}
             >
-              <RotateCw size={20} />
+              <RotateCw size={18} />
             </button>
           </div>
 
           <button 
-            onClick={handlePublish}
-            className="flex items-center gap-3 bg-amber-600 text-white px-6 py-3 rounded-full shadow-2xl hover:bg-amber-500 font-bold text-xs uppercase tracking-widest transition-all"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-github-export'))}
+            className="flex items-center gap-3 bg-amber-600 text-white px-8 py-4 rounded-sm shadow-2xl hover:bg-amber-500 font-bold text-[10px] uppercase tracking-[0.3em] transition-all"
           >
-            <Code size={18} /> Publicar en la Web
+            <Save size={18} /> Guardar Permaneciendo
           </button>
 
           <button 
             onClick={() => { admin.setIsAdmin(false); setIsOpen(false); }}
-            className="flex items-center gap-3 bg-red-900 text-white px-6 py-3 rounded-full shadow-2xl hover:bg-red-800 font-bold text-xs uppercase tracking-widest transition-all"
+            className="flex items-center gap-3 bg-red-950 text-white px-8 py-3 rounded-sm hover:bg-red-900 font-bold text-[10px] uppercase tracking-widest transition-all"
           >
-            <Lock size={18} /> Salir Modo Edición
+            <Lock size={16} /> Salir Modo Admin
           </button>
         </div>
       )}
 
-      {/* Botón Principal: El "Botón Maestro" */}
-      <div className="relative">
-        {/* Efecto de Pulso para que no pase desapercibido */}
-        {!admin.isAdmin && (
-          <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-ping"></div>
-        )}
-        
-        <button
-          onMouseDown={handleStartPress}
-          onMouseUp={handleEndPress}
-          onMouseLeave={handleEndPress}
-          onTouchStart={handleStartPress}
-          onTouchEnd={handleEndPress}
-          className={`relative p-6 rounded-full shadow-[0_0_30px_rgba(245,158,11,0.3)] transition-all duration-300 transform border-2 flex items-center justify-center ${
-            isPressing ? 'scale-90 bg-amber-500 border-white' : 
-            admin.isAdmin ? 'bg-amber-600 border-amber-300 hover:scale-110' : 'bg-zinc-900 border-amber-500 hover:border-amber-400'
-          }`}
-        >
-          {isPressing && (
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-              <circle
-                cx="50%" cy="50%" r="46%"
-                fill="none"
-                stroke="white"
-                strokeWidth="4"
-                strokeDasharray="100"
-                className="animate-[progress_1.5s_linear_forwards]"
-                style={{ strokeDashoffset: '100' }}
-              />
-            </svg>
-          )}
-          
-          {admin.isAdmin ? (
-            isOpen ? <X size={28} className="text-white" /> : <ShieldCheck size={28} className="text-white" />
-          ) : (
-            <div className="flex flex-col items-center">
-              <Lock size={24} className="text-amber-500" />
-              <span className="absolute -top-10 right-0 bg-amber-500 text-black text-[9px] font-bold px-2 py-1 rounded-sm whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">MANTENER PARA ENTRAR</span>
-            </div>
-          )}
-        </button>
-      </div>
-
-      <style>{`
-        @keyframes progress {
-          from { stroke-dashoffset: 100; }
-          to { stroke-dashoffset: 0; }
-        }
-      `}</style>
+      <button
+        onClick={handleLogin}
+        className={`p-6 rounded-full shadow-2xl transition-all duration-300 border-2 ${
+          admin.isAdmin ? 'bg-amber-600 border-amber-400 rotate-0' : 'bg-zinc-900 border-amber-500 hover:scale-110'
+        }`}
+      >
+        {admin.isAdmin ? (isOpen ? <X size={28} /> : <ShieldCheck size={28} />) : <Lock size={24} className="text-amber-500" />}
+      </button>
     </div>
   );
 };
