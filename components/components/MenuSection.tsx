@@ -69,34 +69,44 @@ const MenuSection: React.FC = () => {
 
   const handlePriceChange = (val: string) => {
     if (!editingItem) return;
-    // Extraemos solo los dígitos del valor ingresado
+    
+    // Solo permitimos dígitos. Cualquier otra cosa se elimina.
     const numbersOnly = val.replace(/\D/g, '');
-    // Siempre mantenemos el signo $, si no hay números ponemos solo el $
+    
+    // Siempre forzamos el formato $ + números
     const formattedPrice = numbersOnly === '' ? '$' : `$${numbersOnly}`;
+    
     setEditingItem({ ...editingItem, price: formattedPrice });
+    
+    // Aseguramos que el cursor se mantenga al final después de cada cambio
+    setTimeout(() => {
+      if (priceInputRef.current) {
+        const len = priceInputRef.current.value.length;
+        priceInputRef.current.setSelectionRange(len, len);
+      }
+    }, 0);
   };
 
   const handlePriceFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     if (!editingItem) return;
     
+    // Si el precio es el valor base "$0", lo limpiamos a "$" para escribir directo
     if (editingItem.price === '$0') {
-      // Si es el valor por defecto, lo dejamos solo en "$" para que escriba directo
       setEditingItem({ ...editingItem, price: '$' });
-    } else {
-      // Si ya tiene precio, movemos el cursor al final
-      const val = e.target.value;
-      // Pequeño delay para asegurar que el navegador no resetee el cursor
-      setTimeout(() => {
-        if (priceInputRef.current) {
-          const len = priceInputRef.current.value.length;
-          priceInputRef.current.setSelectionRange(len, len);
-        }
-      }, 0);
     }
+    
+    // Forzamos el cursor al final
+    const val = e.target.value;
+    setTimeout(() => {
+      if (priceInputRef.current) {
+        const len = priceInputRef.current.value.length;
+        priceInputRef.current.setSelectionRange(len, len);
+      }
+    }, 0);
   };
 
   const handlePriceClick = (e: React.MouseEvent<HTMLInputElement>) => {
-    // Al hacer clic, siempre forzamos el cursor al final si ya tiene contenido
+    // Evitamos que el usuario mueva el cursor al medio o al inicio ($)
     if (priceInputRef.current) {
       const len = priceInputRef.current.value.length;
       priceInputRef.current.setSelectionRange(len, len);
@@ -105,8 +115,12 @@ const MenuSection: React.FC = () => {
 
   const handleSaveEdit = () => {
     if (!editingItem) return;
-    // Si el precio quedó vacío o solo con $, ponemos $0 por defecto
-    const finalPrice = (editingItem.price === '$' || editingItem.price === '') ? '$0' : editingItem.price;
+    
+    // Limpieza final antes de guardar
+    let finalPrice = editingItem.price;
+    if (finalPrice === '$' || finalPrice === '') {
+      finalPrice = '$0';
+    }
     
     const newMenu = admin.menu.map(cat => {
       if (cat.id === editingItem.catId) {
@@ -220,7 +234,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
         </div>
       </div>
 
-      {/* MODAL DE EDICIÓN CON VALIDACIÓN DE PRECIO MEJORADA */}
+      {/* MODAL DE EDICIÓN CON VALIDACIÓN DE PRECIO PERFECTA */}
       {editingItem && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-zinc-900 border border-zinc-800 w-full max-w-xl p-8 shadow-2xl">
@@ -240,10 +254,18 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};
                     <input 
                       ref={priceInputRef}
                       type="text" 
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={editingItem.price} 
                       onChange={e => handlePriceChange(e.target.value)} 
                       onFocus={handlePriceFocus}
                       onClick={handlePriceClick}
+                      onKeyDown={(e) => {
+                        // Impedimos mover el cursor hacia la izquierda con las flechas para proteger el "$"
+                        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'Home') {
+                          // e.preventDefault(); // Opcional: descomentar si se quiere bloquear totalmente el movimiento
+                        }
+                      }}
                       placeholder="$0"
                       className="w-full bg-black border border-zinc-800 p-3 text-amber-500 font-bold outline-none focus:border-amber-500" 
                     />
