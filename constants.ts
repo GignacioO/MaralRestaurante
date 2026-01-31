@@ -1,7 +1,5 @@
 
-// CADA VEZ QUE CAMBIES EL MENÚ EN EL CÓDIGO, SUBÍ ESTE NÚMERO (ej: "1.3", "1.4", etc.)
-// Esto obliga a que todos los dispositivos (celulares de clientes) se actualicen automáticamente.
-export const APP_VERSION = "1.3";
+export const APP_VERSION = "1.4";
 
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
@@ -21,6 +19,10 @@ export interface MenuItem {
   price: string;
   desc: string;
   image?: string;
+  side?: {
+    name: string;
+    price: string;
+  };
 }
 
 export interface MenuCategory {
@@ -34,145 +36,42 @@ export const INITIAL_MENU: MenuCategory[] = [
     id: "entradas",
     name: "Entradas",
     items: [
-      {
-        name: "Empanadas Salteñas",
-        price: "$1200",
-        desc: "Carne cortada a cuchillo, fritas o al horno.",
-        image: ""
-      },
-      {
-        name: "Rabas a la Romana",
-        price: "$8500",
-        desc: "Anillos de calamar tiernos con limón y perejil.",
-        image: ""
-      },
-      {
-        name: "Tortilla de Papas",
-        price: "$6000",
-        desc: "Clásica tortilla española, opción babé disponible.",
-        image: ""
-      },
-      {
-        name: "Provoleta Maral",
-        price: "$5500",
-        desc: "Queso provolone fundido con orégano y aceite de oliva.",
-        image: ""
-      }
+      { name: "Empanadas Salteñas", price: "$1200", desc: "Carne cortada a cuchillo, fritas o al horno." },
+      { name: "Rabas a la Romana", price: "$8500", desc: "Anillos de calamar tiernos con limón y perejil." }
     ]
+  },
+  {
+    id: "bebidas",
+    name: "Bebidas",
+    items: []
   },
   {
     id: "minutas",
     name: "Minutas",
     items: [
-      {
-        name: "Milanesa a la Napolitana",
-        price: "$12500",
-        desc: "Milanesa de ternera con salsa de tomate, jamón, mozzarella y un toque de orégano.",
+      { 
+        name: "Milanesa a la Napolitana", 
+        price: "$12500", 
+        desc: "Milanesa de ternera con salsa de tomate, jamón y mozzarella.",
         image: "https://images.unsplash.com/photo-1606471191009-63994c53433b?auto=format&fit=crop&q=80&w=400"
-      },
-      {
-        name: "Suprema a la Suiza",
-        price: "$11800",
-        desc: "Pechuga de pollo con salsa blanca y gratén de queso.",
-        image: ""
-      },
-      {
-        name: "Revuelto Gramajo",
-        price: "$7500",
-        desc: "Papas pay, huevo, jamón cocido y arvejas.",
-        image: ""
-      }
-    ]
-  },
-  {
-    id: "parrilla",
-    name: "De nuestra Parrilla",
-    items: [
-      {
-        name: "Bife de Chorizo Maral",
-        price: "$18000",
-        desc: "Corte premium de 400g a la parrilla con guarnición.",
-        image: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&q=80&w=400"
-      },
-      {
-        name: "Vacío del Fino",
-        price: "$17500",
-        desc: "Corte tierno cocción lenta a la brasa.",
-        image: ""
-      },
-      {
-        name: "Asado de Tira",
-        price: "$16000",
-        desc: "Costillar seleccionado de exportación.",
-        image: ""
-      },
-      {
-        name: "Parrillada Completa (2 pers)",
-        price: "$35000",
-        desc: "Chorizo, morcilla, chinchulín, riñón, asado y vacío.",
-        image: ""
       }
     ]
   },
   {
     id: "pastas",
-    name: "Pastas Caseras",
+    name: "Pastas",
     items: [
       {
-        name: "Ravioles de verdura con salsa bolognesa",
+        name: "Ravioles de verdura",
         price: "$30000",
-        desc: "Confeccionado por Amalia Galante, la abuela del pueblo, más de 65 años de experiencia culinaria.",
+        desc: "Confeccionado por Amalia Galante.",
         image: "https://i.postimg.cc/FkdK21Jx/ravioles.jpg"
-      },
-      {
-        name: "Ñoquis de Papa",
-        price: "$9500",
-        desc: "Hechos a mano todos los días.",
-        image: ""
-      },
-      {
-        name: "Sorrentinos Maral",
-        price: "$11000",
-        desc: "Rellenos de jamón, mozzarella y ricota.",
-        image: ""
-      }
-    ]
-  },
-  {
-    id: "postres",
-    name: "Postres",
-    items: [
-      {
-        name: "Flan Casero",
-        price: "$3500",
-        desc: "Con dulce de leche y/o crema.",
-        image: ""
-      },
-      {
-        name: "Queso y Dulce",
-        price: "$3200",
-        desc: "Postre vigilante: Queso fresco con dulce de batata o membrillo.",
-        image: ""
-      },
-      {
-        name: "Mousse de Chocolate",
-        price: "$3800",
-        desc: "Artesanal con virutas de chocolate amargo.",
-        image: ""
       }
     ]
   }
 ];
 
 export const REVIEWS = [
-  {
-    author: "Carolina M.",
-    text: "La milanesa napolitana es gigante y súper tierna. Un lugar auténtico con excelente atención.",
-    rating: 5
-  },
-  {
-    author: "Jorge G.",
-    text: "El mejor bife de chorizo de la zona. Precios justos y ambiente familiar.",
-    rating: 4
-  }
+  { author: "Carolina M.", text: "La milanesa napolitana es gigante y súper tierna.", rating: 5 },
+  { author: "Jorge G.", text: "El mejor bife de chorizo de la zona.", rating: 4 }
 ];
