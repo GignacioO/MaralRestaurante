@@ -59,18 +59,39 @@ const MenuSection: React.FC = () => {
     else setEditingItem({ ...editingItem, price: formatted });
   };
 
+  // Función para limpiar texto predeterminado al hacer click/foco
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof EditingItem) => {
+    if (!editingItem) return;
+    const val = String(editingItem[field]);
+    const defaults = ['Nuevo Plato', '$0', 'Descripción...', 'Ej: Papas Fritas o Ensalada', '$'];
+    
+    if (defaults.includes(val) || val.trim() === '') {
+      if (field === 'price' || field === 'sidePrice') {
+        setEditingItem({ ...editingItem, [field]: '$' });
+      } else {
+        setEditingItem({ ...editingItem, [field]: '' });
+      }
+    } else {
+      // Si no es un default, seleccionamos todo el texto para facilitar reemplazo
+      e.target.select();
+    }
+  };
+
   const handleSaveEdit = () => {
     if (!editingItem) return;
-    const finalPrice = editingItem.price === '$' ? '$0' : editingItem.price;
+    const finalPrice = (editingItem.price === '$' || editingItem.price === '') ? '$0' : editingItem.price;
     const newMenu = admin.menu.map(cat => {
       if (cat.id === editingItem.catId) {
         const newItems = [...cat.items];
         newItems[editingItem.idx] = {
-          name: editingItem.name,
+          name: editingItem.name || 'Sin nombre',
           price: finalPrice,
           desc: editingItem.desc,
           image: editingItem.image,
-          side: editingItem.hasSide ? { name: editingItem.sideName, price: editingItem.sidePrice } : undefined
+          side: editingItem.hasSide ? { 
+            name: editingItem.sideName || 'Guarnición', 
+            price: editingItem.sidePrice === '$' ? '$0' : editingItem.sidePrice 
+          } : undefined
         };
         return { ...cat, items: newItems };
       }
@@ -217,11 +238,23 @@ const MenuSection: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Nombre del Plato</label>
-                    <input type="text" value={editingItem.name} onChange={e => setEditingItem({...editingItem, name: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm focus:border-amber-500 outline-none" />
+                    <input 
+                      type="text" 
+                      value={editingItem.name} 
+                      onFocus={(e) => handleInputFocus(e, 'name')}
+                      onChange={e => setEditingItem({...editingItem, name: e.target.value})} 
+                      className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm focus:border-amber-500 outline-none" 
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Precio Base</label>
-                    <input type="text" value={editingItem.price} onChange={e => handlePriceChange(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm font-bold text-amber-500 focus:border-amber-500 outline-none" />
+                    <input 
+                      type="text" 
+                      value={editingItem.price} 
+                      onFocus={(e) => handleInputFocus(e, 'price')}
+                      onChange={e => handlePriceChange(e.target.value)} 
+                      className="w-full bg-zinc-900 border border-zinc-800 p-3 text-sm font-bold text-amber-500 focus:border-amber-500 outline-none" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -235,8 +268,22 @@ const MenuSection: React.FC = () => {
                     </label>
                     {editingItem.hasSide && (
                       <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
-                        <input type="text" placeholder="Ej: Papas Fritas o Ensalada" value={editingItem.sideName} onChange={e => setEditingItem({...editingItem, sideName: e.target.value})} className="w-full bg-black border border-zinc-800 p-2 text-xs outline-none focus:border-amber-500" />
-                        <input type="text" placeholder="Precio Extra (o $0)" value={editingItem.sidePrice} onChange={e => handlePriceChange(e.target.value, true)} className="w-full bg-black border border-zinc-800 p-2 text-xs text-amber-500 outline-none focus:border-amber-500" />
+                        <input 
+                          type="text" 
+                          placeholder="Ej: Papas Fritas o Ensalada" 
+                          value={editingItem.sideName} 
+                          onFocus={(e) => handleInputFocus(e, 'sideName')}
+                          onChange={e => setEditingItem({...editingItem, sideName: e.target.value})} 
+                          className="w-full bg-black border border-zinc-800 p-2 text-xs outline-none focus:border-amber-500" 
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Precio Extra (o $0)" 
+                          value={editingItem.sidePrice} 
+                          onFocus={(e) => handleInputFocus(e, 'sidePrice')}
+                          onChange={e => handlePriceChange(e.target.value, true)} 
+                          className="w-full bg-black border border-zinc-800 p-2 text-xs text-amber-500 outline-none focus:border-amber-500" 
+                        />
                         <p className="text-[9px] text-zinc-500 italic">Si el precio es $0, se mostrará en el título. Si tiene precio, se sumará al total.</p>
                       </div>
                     )}
@@ -262,7 +309,13 @@ const MenuSection: React.FC = () => {
 
               <div>
                 <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-2">Descripción</label>
-                <textarea value={editingItem.desc} onChange={e => setEditingItem({...editingItem, desc: e.target.value})} rows={2} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-xs outline-none focus:border-amber-500" />
+                <textarea 
+                  value={editingItem.desc} 
+                  onFocus={(e) => handleInputFocus(e, 'desc')}
+                  onChange={e => setEditingItem({...editingItem, desc: e.target.value})} 
+                  rows={2} 
+                  className="w-full bg-zinc-900 border border-zinc-800 p-3 text-xs outline-none focus:border-amber-500" 
+                />
               </div>
             </div>
 
