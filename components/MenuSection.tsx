@@ -1,7 +1,7 @@
 
 import React, { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { AdminContext } from '../App';
-import { Plus, Edit2, Trash2, FileDown, Camera, X, LayoutGrid, List, Search, UtensilsCrossed, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileDown, Camera, X, LayoutGrid, List, Search, UtensilsCrossed, ArrowRight, CheckCircle2, Sparkles, ShieldAlert } from 'lucide-react';
 
 interface EditingItem {
   catId: string;
@@ -79,7 +79,8 @@ const MenuSection: React.FC = () => {
     const newMenu = admin.menu.map(cat => {
       if (cat.id === catId) {
         if (isExtra) {
-          return { ...cat, extras: [...(cat.extras || []), newItem] };
+          const currentExtras = cat.extras || [];
+          return { ...cat, extras: [...currentExtras, newItem] };
         }
         return { ...cat, items: [...cat.items, newItem] };
       }
@@ -237,6 +238,14 @@ const MenuSection: React.FC = () => {
   return (
     <section id="menu" className="py-24 bg-zinc-950">
       <div className="max-w-6xl mx-auto px-4">
+        {/* INDICADOR DE MODO ADMIN (SOLO VISIBLE SI ESTÁ ACTIVO) */}
+        {admin.isAdmin && (
+          <div className="mb-8 flex items-center gap-4 p-4 bg-amber-600/10 border border-amber-600/30 rounded-sm no-print animate-pulse">
+            <ShieldAlert className="text-amber-500" size={20} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Panel de Control Activo: Haz clic en cualquier elemento para editar</span>
+          </div>
+        )}
+
         {/* ENCABEZADO Y BUSCADOR */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8 no-print">
           <div className="w-full md:w-1/3">
@@ -353,9 +362,9 @@ const MenuSection: React.FC = () => {
           )}
         </div>
 
-        {/* SUB-SECCIÓN DE GUARNICIONES O SALSAS - SIEMPRE DEBAJO DEL ÚLTIMO PLATO */}
-        {activeCategory && (activeCategory.extras?.length || admin.isAdmin) && (activeCategory.id === 'minutas' || activeCategory.id === 'pastas') && (
-          <div className="mt-24 pt-20 border-t-4 border-zinc-900/50">
+        {/* SUB-SECCIÓN DE GUARNICIONES O SALSAS - REFORZADA PARA ADMIN */}
+        {activeCategory && (activeCategory.id === 'minutas' || activeCategory.id === 'pastas') && (
+          <div className="mt-24 pt-20 border-t-4 border-zinc-900/50 relative">
             <div className="flex flex-col items-center mb-12">
               <h3 className="text-3xl serif italic text-amber-500 font-bold uppercase tracking-[0.3em] mb-4">
                 {getExtraLabel(activeCategory.id)}
@@ -372,14 +381,19 @@ const MenuSection: React.FC = () => {
               {admin.isAdmin && (
                 <button 
                   onClick={() => handleAddItem(activeCategory.id, true)} 
-                  className="flex items-center justify-center gap-3 border-2 border-dashed border-zinc-900 p-6 hover:border-amber-500/50 text-zinc-700 hover:text-amber-500 transition-all no-print rounded-sm bg-zinc-900/5 group"
+                  className="flex items-center justify-center gap-3 border-2 border-dashed border-amber-600/30 p-8 hover:border-amber-500 text-amber-500/60 hover:text-amber-500 transition-all no-print rounded-sm bg-amber-600/5 group min-h-[100px]"
                 >
-                  <Plus size={20} className="group-hover:scale-125 transition-transform" />
-                  <span className="text-[10px] uppercase font-black tracking-widest">Añadir {getExtraItemPrefix(activeCategory.id)}</span>
+                  <Plus size={24} className="group-hover:scale-125 transition-transform" />
+                  <span className="text-[11px] uppercase font-black tracking-widest">Nueva {getExtraItemPrefix(activeCategory.id)}</span>
                 </button>
               )}
             </div>
             
+            {/* Si no hay extras y no es admin, no mostramos nada. Pero si es admin, ya mostramos el botón arriba */}
+            {(!activeCategory.extras || activeCategory.extras.length === 0) && !admin.isAdmin && (
+              <div className="text-center py-10 opacity-30 italic text-sm">Consultar opciones del día con el mozo.</div>
+            )}
+
             <div className="mt-12 p-6 bg-zinc-900/10 border border-zinc-900 rounded-sm text-center">
               <p className="text-[10px] text-zinc-500 uppercase tracking-[0.4em] italic no-print font-bold">
                 ⚠️ Importante: Los precios de los acompañamientos se adicionan al valor del plato principal.
