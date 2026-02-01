@@ -1,12 +1,26 @@
 
-import React from 'react';
-import { Utensils } from 'lucide-react';
+import React, { useContext } from 'react';
+import { Utensils, Lock } from 'lucide-react';
 import { RESTAURANT_DATA } from '../constants';
+import { AdminContext } from '../App';
 
 const Footer: React.FC = () => {
+  const admin = useContext(AdminContext);
+
   const scrollToId = (id: string) => {
     const element = document.getElementById(id);
     if (element) window.scrollTo({ top: element.offsetTop - 80, behavior: 'smooth' });
+  };
+
+  const handleAdminAccess = () => {
+    if (admin?.isAdmin) return;
+    const pass = prompt('INGRESE CLAVE DE ACCESO:');
+    if (pass === admin?.password) {
+      admin.setIsAdmin(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (pass !== null) {
+      alert('Clave incorrecta.');
+    }
   };
 
   return (
@@ -31,6 +45,14 @@ const Footer: React.FC = () => {
               <li><button onClick={() => scrollToId('inicio')} className="hover:text-amber-500">Inicio</button></li>
               <li><button onClick={() => scrollToId('menu')} className="hover:text-amber-500">Menú</button></li>
               <li><button onClick={() => scrollToId('opiniones')} className="hover:text-amber-500">Opiniones</button></li>
+              <li>
+                <button 
+                  onClick={handleAdminAccess} 
+                  className={`flex items-center gap-2 transition-colors ${admin?.isAdmin ? 'text-amber-500' : 'hover:text-amber-500'}`}
+                >
+                  <Lock size={10} /> {admin?.isAdmin ? 'Modo Admin Activo' : 'Acceso Privado'}
+                </button>
+              </li>
             </ul>
           </div>
 
