@@ -1,5 +1,5 @@
 
-export const APP_VERSION = "1.7";
+export const APP_VERSION = "2.1";
 
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
@@ -29,6 +29,7 @@ export interface MenuCategory {
   id: string;
   name: string;
   items: MenuItem[];
+  extras?: MenuItem[]; // Para guarniciones o salsas
 }
 
 export const INITIAL_MENU: MenuCategory[] = [
@@ -52,9 +53,13 @@ export const INITIAL_MENU: MenuCategory[] = [
       { 
         name: "Milanesa a la Napolitana", 
         price: "$12500", 
-        desc: "Milanesa de ternera con salsa de tomate, jamón y mozzarella.",
+        desc: "Milanesa de ternera con salsa de tomate, jamón y mozzarella. (No incluye guarnición)",
         image: "https://images.unsplash.com/photo-1606471191009-63994c53433b?auto=format&fit=crop&q=80&w=400"
       }
+    ],
+    extras: [
+      { name: "Papas Fritas", price: "$3500", desc: "Bastones clásicos, doble cocción." },
+      { name: "Puré de Papa o Calabaza", price: "$3000", desc: "Cremoso con manteca y nuez moscada." }
     ]
   },
   {
@@ -63,10 +68,14 @@ export const INITIAL_MENU: MenuCategory[] = [
     items: [
       {
         name: "Ravioles de verdura",
-        price: "$30000",
-        desc: "Confeccionado por Amalia Galante.",
+        price: "$8500",
+        desc: "Pastas frescas elaboradas artesanalmente. (Elegir salsa abajo)",
         image: "https://i.postimg.cc/FkdK21Jx/ravioles.jpg"
       }
+    ],
+    extras: [
+      { name: "Filetto", price: "$1500", desc: "Pomodoro italiano y albahaca fresca." },
+      { name: "Bolognesa", price: "$2500", desc: "Carne seleccionada y cocción lenta." }
     ]
   }
 ];
