@@ -7,7 +7,7 @@ import MenuSection from './components/MenuSection';
 import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import AdminFab from './components/AdminFab';
+import AdminBar from './components/AdminBar';
 import { INITIAL_MENU, MenuCategory, APP_VERSION } from './constants';
 
 interface AdminContextType {
@@ -47,12 +47,19 @@ function App() {
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedMenu = localStorage.getItem('maral_menu');
-    return (savedVersion !== APP_VERSION) ? INITIAL_MENU : (savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU);
+    // Si la versión es distinta, forzamos INITIAL_MENU para que aparezcan guarniciones/salsas nuevas
+    if (savedVersion !== APP_VERSION) {
+      return INITIAL_MENU;
+    }
+    return savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU;
   });
   const [content, setContent] = useState(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedContent = localStorage.getItem('maral_content');
-    return (savedVersion !== APP_VERSION) ? DEFAULT_CONTENT : (savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT);
+    if (savedVersion !== APP_VERSION) {
+      return DEFAULT_CONTENT;
+    }
+    return savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT;
   });
 
   const [past, setPast] = useState<MenuCategory[][]>([]);
@@ -94,7 +101,8 @@ function App() {
       password, updatePassword: setPassword,
       content, updateContent: (newC: any) => setContent({...content, ...newC})
     }}>
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className={`min-h-screen bg-zinc-950 text-zinc-100 ${isAdmin ? 'pt-12' : ''}`}>
+        {isAdmin && <AdminBar />}
         <Navbar />
         <main>
           <Hero />
@@ -104,7 +112,6 @@ function App() {
           <Contact />
         </main>
         <Footer />
-        <AdminFab />
       </div>
     </AdminContext.Provider>
   );
