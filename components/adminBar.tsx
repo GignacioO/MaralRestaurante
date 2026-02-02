@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { Lock, RotateCcw, RotateCw, Save, Settings, Loader2, X, Mail, ShieldCheck } from 'lucide-react';
+import { Lock, RotateCcw, RotateCw, Save, Settings, Loader2, X, Mail, ShieldCheck, RefreshCcw } from 'lucide-react';
 import { AdminContext } from '../App';
 import { RESTAURANT_DATA, REVIEWS, APP_VERSION } from '../constants';
 
@@ -10,6 +10,15 @@ const AdminBar: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   if (!admin) return null;
+
+  const handleForceReset = () => {
+    if (confirm('¿Deseas resetear la caché local? Esto borrará tus cambios no publicados y cargará la configuración inicial de la web. Útil si no ves las nuevas secciones.')) {
+      localStorage.removeItem('maral_menu');
+      localStorage.removeItem('maral_version');
+      localStorage.removeItem('maral_content');
+      window.location.reload();
+    }
+  };
 
   const handleRequestPasswordChange = () => {
     const requestedPass = prompt('Nueva contraseña deseada:');
@@ -42,7 +51,7 @@ const AdminBar: React.FC = () => {
         headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'Update from Admin Panel', content: btoa(unescape(encodeURIComponent(fileContent))), sha })
       });
-      if (putRes.ok) alert('¡Publicación exitosa!');
+      if (putRes.ok) alert('¡Publicación exitosa! Los cambios tardarán 1-2 minutos en reflejarse en la web pública.');
       else throw new Error('Error al subir.');
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -57,7 +66,7 @@ const AdminBar: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-white border-r border-amber-500 pr-4 mr-2">
             <ShieldCheck size={16} />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Admin Mode</span>
+            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Admin Mode v{APP_VERSION}</span>
           </div>
           <div className="flex gap-1">
             <button onClick={admin.undo} disabled={!admin.canUndo} className="p-2 text-white hover:bg-amber-700 disabled:opacity-30 rounded-sm transition-colors" title="Deshacer">
@@ -70,6 +79,10 @@ const AdminBar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button onClick={handleForceReset} className="p-2 text-white hover:bg-amber-700 rounded-sm transition-colors flex items-center gap-2" title="Limpiar Caché Local">
+            <RefreshCcw size={16} />
+            <span className="text-[8px] font-bold uppercase hidden md:inline">Reset Caché</span>
+          </button>
           <button onClick={handleRequestPasswordChange} className="p-2 text-white hover:bg-amber-700 rounded-sm transition-colors hidden sm:flex" title="Cambiar Clave">
             <Mail size={16} />
           </button>
