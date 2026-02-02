@@ -1,5 +1,5 @@
 
-export const APP_VERSION = "2.1";
+export const APP_VERSION = "2.2";
 
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
