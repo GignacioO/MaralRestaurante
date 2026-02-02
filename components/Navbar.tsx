@@ -14,7 +14,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Bloquear scroll del body cuando el menú está abierto para evitar clics fantasma
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -40,7 +39,7 @@ const Navbar: React.FC = () => {
     setIsOpen(false);
   };
 
-  const handleAdminAccess = (e?: React.PointerEvent | React.MouseEvent) => {
+  const handleAdminAccess = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -51,7 +50,7 @@ const Navbar: React.FC = () => {
       return;
     }
     
-    // El prompt debe ser directo por interacción del usuario para evitar bloqueos del navegador
+    // Usamos un pequeño delay opcional para asegurar que el evento táctil haya terminado
     const pass = prompt('INGRESE CLAVE DE ACCESO:');
     if (pass === admin?.password) {
       admin.setIsAdmin(true);
@@ -90,8 +89,8 @@ const Navbar: React.FC = () => {
               </button>
             ))}
             <button
-              onPointerDown={() => handleAdminAccess()}
-              className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] flex items-center gap-2 cursor-pointer ${admin?.isAdmin ? 'text-amber-500' : 'text-zinc-500 hover:text-amber-500'}`}
+              onClick={handleAdminAccess}
+              className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] flex items-center gap-2 cursor-pointer border-l border-zinc-800 pl-6 ml-2 ${admin?.isAdmin ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-500'}`}
             >
               {admin?.isAdmin ? <ShieldCheck size={14} /> : <Lock size={14} />}
               {admin?.isAdmin ? 'Admin' : 'Acceso'}
@@ -100,7 +99,7 @@ const Navbar: React.FC = () => {
 
           <div className="md:hidden">
             <button 
-              onPointerDown={() => setIsOpen(!isOpen)} 
+              onClick={() => setIsOpen(!isOpen)} 
               className="text-zinc-100 p-2 focus:outline-none touch-manipulation relative z-[120]"
               aria-label="Toggle Menu"
             >
@@ -110,7 +109,6 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Menú Móvil - Rediseñado para respuesta táctil inmediata */}
       <div className={`fixed inset-0 bg-zinc-950 z-[90] md:hidden transition-all duration-300 flex flex-col ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
         <div className="flex-1 pt-28 pb-10 px-6 overflow-y-auto space-y-1">
           {navLinks.map((link) => (
@@ -125,7 +123,7 @@ const Navbar: React.FC = () => {
           
           <div className="pt-6">
             <button
-              onPointerDown={handleAdminAccess}
+              onClick={handleAdminAccess}
               className={`w-full text-left px-5 py-8 uppercase tracking-[0.25em] text-sm font-black flex items-center gap-5 transition-all rounded-sm shadow-2xl border border-zinc-900 touch-manipulation cursor-pointer ${admin?.isAdmin ? 'text-amber-500 bg-amber-600/5 border-amber-500/20' : 'text-zinc-100 bg-zinc-900/60 active:bg-amber-600 active:text-white'}`}
             >
               <div className={`p-4 rounded-full shadow-lg shrink-0 ${admin?.isAdmin ? 'bg-amber-600 text-white' : 'bg-amber-600 text-white shadow-amber-900/40'}`}>
@@ -135,7 +133,7 @@ const Navbar: React.FC = () => {
                 <span className="text-xs tracking-[0.3em] font-black">
                   {admin?.isAdmin ? 'MODO ADMIN ACTIVO' : 'ACCESO PRIVADO'}
                 </span>
-                {!admin?.isAdmin && <span className="text-[9px] text-zinc-500 font-normal tracking-widest mt-1">Sincronización y Edición</span>}
+                {!admin?.isAdmin && <span className="text-[9px] text-zinc-400 font-normal tracking-widest mt-1">Sincronización y Edición</span>}
               </div>
             </button>
           </div>
