@@ -1,7 +1,7 @@
 
 import React, { useContext } from 'react';
 import { Utensils, Lock } from 'lucide-react';
-import { RESTAURANT_DATA } from '../constants';
+import { RESTAURANT_DATA, APP_VERSION } from '../constants';
 import { AdminContext } from '../App';
 
 const Footer: React.FC = () => {
@@ -65,10 +65,13 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-10 border-t border-zinc-900 text-center">
+        <div className="pt-10 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-zinc-600 text-[10px] uppercase tracking-[0.3em]">
             © {new Date().getFullYear()} {RESTAURANT_DATA.name}. Buenos Aires, Argentina.
           </p>
+          <span className="text-zinc-800 text-[9px] font-bold tracking-widest uppercase">
+            Build v{APP_VERSION}
+          </span>
         </div>
       </div>
     </footer>
