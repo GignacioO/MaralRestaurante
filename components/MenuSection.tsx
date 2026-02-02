@@ -76,17 +76,32 @@ const MenuSection: React.FC = () => {
     const defaultName = isExtra ? `Nueva ${getExtraItemPrefix(catId)}` : 'Nuevo Plato';
     const newItem = { name: defaultName, price: '$0', desc: 'Descripción...', image: '' };
     
+    let newIdx = 0;
     const newMenu = admin.menu.map(cat => {
       if (cat.id === catId) {
         if (isExtra) {
           const currentExtras = cat.extras || [];
+          newIdx = currentExtras.length;
           return { ...cat, extras: [...currentExtras, newItem] };
         }
+        newIdx = cat.items.length;
         return { ...cat, items: [...cat.items, newItem] };
       }
       return cat;
     });
+    
     admin.updateMenu(newMenu);
+
+    // Abrir automáticamente el editor para el nuevo item
+    setEditingItem({
+      catId,
+      idx: newIdx,
+      isExtra,
+      ...newItem,
+      hasSide: false,
+      sideName: '',
+      sidePrice: '$0'
+    });
   };
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof EditingItem) => {
