@@ -19,7 +19,8 @@ interface EditingItem {
 const MenuSection: React.FC = () => {
   const admin = useContext(AdminContext);
   const [activeTab, setActiveTab] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // Cambiado a 'list' por defecto según pedido del usuario
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -92,7 +93,7 @@ const MenuSection: React.FC = () => {
     
     admin.updateMenu(newMenu);
 
-    // Abrir automáticamente el editor para el nuevo item
+    // Abrir automáticamente el editor para el nuevo item (Edición directa al crear)
     setEditingItem({
       catId,
       idx: newIdx,
