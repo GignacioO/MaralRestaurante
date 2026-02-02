@@ -14,13 +14,7 @@ const Footer: React.FC = () => {
 
   const handleAdminAccess = () => {
     if (admin?.isAdmin) return;
-    const pass = prompt('INGRESE CLAVE DE ACCESO:');
-    if (pass === admin?.password) {
-      admin.setIsAdmin(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (pass !== null) {
-      alert('Clave incorrecta.');
-    }
+    admin?.setShowLoginModal(true);
   };
 
   return (
@@ -48,7 +42,7 @@ const Footer: React.FC = () => {
               <li>
                 <button 
                   onClick={handleAdminAccess} 
-                  className={`flex items-center gap-2 transition-colors ${admin?.isAdmin ? 'text-amber-500' : 'hover:text-amber-500'}`}
+                  className={`flex items-center gap-2 transition-colors ${admin?.isAdmin ? 'text-amber-500' : 'text-amber-500 hover:text-white'}`}
                 >
                   <Lock size={10} /> {admin?.isAdmin ? 'Modo Admin Activo' : 'Acceso Privado'}
                 </button>
