@@ -16,8 +16,7 @@ interface EditingItem {
 const MenuSection: React.FC = () => {
   const admin = useContext(AdminContext);
   const [activeTab, setActiveTab] = useState('');
-  // Modo lista predeterminado por solicitud
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -90,7 +89,6 @@ const MenuSection: React.FC = () => {
     
     admin.updateMenu(newMenu);
 
-    // Al crear un plato, se abre directamente la edición
     setEditingItem({
       catId,
       idx: newIdx,
@@ -101,8 +99,8 @@ const MenuSection: React.FC = () => {
 
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof EditingItem) => {
     if (!editingItem) return;
-    const val = String(editingItem[field]);
-    const defaults = ['Nuevo Plato', 'Nueva Salsa', 'Nueva Guarnición', '$0', 'Descripción...', 'Ej: Papas Fritas o Ensalada', 'Ej: Bolognesa o Mixta', '$'];
+    const val = String(editingItem[field as keyof EditingItem]);
+    const defaults = ['Nuevo Plato', 'Nueva Salsa', 'Nueva Guarnición', '$0', 'Descripción...', '$'];
     
     if (defaults.includes(val) || val.trim() === '') {
       setEditingItem({ ...editingItem, [field]: field === 'price' ? '$' : '' });
@@ -137,7 +135,8 @@ const MenuSection: React.FC = () => {
             name: editingItem.name || 'Sin nombre',
             price: finalPrice,
             desc: editingItem.desc,
-            image: editingItem.image
+            image: editingItem.image,
+            side: undefined // Eliminamos cualquier rastro de acompañamiento incluido
           };
           return { ...cat, items: newItems };
         }
@@ -215,7 +214,7 @@ const MenuSection: React.FC = () => {
             <p className="text-zinc-500 text-[11px] mt-2 leading-relaxed italic line-clamp-2">{item.desc}</p>
           </div>
           
-          <div className="flex justify-end items-end mt-4">
+          <div className="flex justify-end mt-4">
             {admin.isAdmin && (
               <div className="flex gap-2 no-print opacity-0 group-hover:opacity-100 transition-all">
                 <button onClick={() => setEditingItem({ catId, idx, isExtra: false, ...item })} className="p-1.5 bg-zinc-800 text-amber-500 rounded-sm hover:bg-zinc-700 transition-colors shadow-lg"><Edit2 size={12} /></button>
@@ -233,6 +232,7 @@ const MenuSection: React.FC = () => {
   return (
     <section id="menu" className="py-24 bg-zinc-950">
       <div className="max-w-6xl mx-auto px-4">
+        {/* INDICADOR DE MODO ADMIN */}
         {admin.isAdmin && (
           <div className="mb-8 flex items-center gap-4 p-4 bg-amber-600/10 border border-amber-600/30 rounded-sm no-print animate-pulse">
             <ShieldAlert className="text-amber-500" size={20} />
@@ -240,6 +240,7 @@ const MenuSection: React.FC = () => {
           </div>
         )}
 
+        {/* ENCABEZADO Y BUSCADOR */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8 no-print">
           <div className="w-full md:w-1/3">
             <h2 className="text-3xl font-bold serif flex items-center gap-3 mb-2">
@@ -321,6 +322,7 @@ const MenuSection: React.FC = () => {
           </div>
         </div>
 
+        {/* TABS DE CATEGORÍAS */}
         <div className="flex flex-wrap justify-center gap-3 mb-16 no-print">
           {admin.menu.map(cat => (
             <button 
@@ -333,6 +335,7 @@ const MenuSection: React.FC = () => {
           ))}
         </div>
 
+        {/* LISTADO DE PLATOS */}
         <div className={`grid ${viewMode === 'grid' ? 'md:grid-cols-2 gap-x-12 gap-y-12' : 'grid-cols-1 gap-0'}`}>
           {activeCategory?.items.length ? activeCategory.items.map((item, idx) => (
             <div id={`item-${activeTab}-${idx}`} key={`${activeTab}-${idx}`} className="scroll-mt-32">
@@ -353,6 +356,7 @@ const MenuSection: React.FC = () => {
           )}
         </div>
 
+        {/* SUB-SECCIÓN DE GUARNICIONES O SALSAS */}
         {activeCategory && (activeCategory.id === 'minutas' || activeCategory.id === 'pastas') && (
           <div className="mt-24 pt-20 border-t-4 border-zinc-900/50 relative">
             <div className="flex flex-col items-center mb-12">
@@ -360,6 +364,9 @@ const MenuSection: React.FC = () => {
                 {getExtraLabel(activeCategory.id)}
               </h3>
               <div className="w-24 h-1 bg-amber-500/30"></div>
+              <p className="mt-6 text-[11px] text-zinc-500 uppercase tracking-widest font-black italic max-w-md text-center">
+                Completa tu plato con nuestras opciones seleccionadas de {getExtraItemPrefix(activeCategory.id).toLowerCase()}
+              </p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -375,10 +382,17 @@ const MenuSection: React.FC = () => {
                 </button>
               )}
             </div>
+            
+            <div className="mt-12 p-6 bg-zinc-900/10 border border-zinc-900 rounded-sm text-center">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-[0.4em] italic no-print font-bold">
+                ⚠️ Importante: Los precios de los acompañamientos se adicionan al valor del plato principal.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
+      {/* EDITOR MODAL PREMIUM */}
       {editingItem && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/98 backdrop-blur-xl overflow-y-auto">
           <div className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl p-10 shadow-[0_0_120px_rgba(0,0,0,1)] my-auto relative border-t-8 border-t-amber-600 animate-in fade-in zoom-in-95 duration-300">
@@ -419,6 +433,22 @@ const MenuSection: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="space-y-4">
+                  {editingItem.isExtra ? (
+                    <div className="p-8 border border-zinc-900 bg-zinc-900/20 rounded-sm flex flex-col items-center justify-center text-center h-full">
+                      <Sparkles size={32} className="text-amber-500/30 mb-4" />
+                      <p className="text-[10px] text-zinc-600 uppercase tracking-widest leading-relaxed">Este acompañamiento aparecerá en la sección inferior dedicada a {getExtraLabel(editingItem.catId)}</p>
+                    </div>
+                  ) : (
+                    <div className="p-8 border border-zinc-900 bg-zinc-900/20 rounded-sm flex flex-col items-center justify-center text-center h-full">
+                      <UtensilsCrossed size={32} className="text-amber-500/30 mb-4" />
+                      <p className="text-[10px] text-zinc-600 uppercase tracking-widest leading-relaxed">Define los detalles de este plato. Los acompañamientos se seleccionan por separado desde su sección correspondiente.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-10">
                 {!editingItem.isExtra && (
                   <div>
                     <label className="text-[10px] uppercase font-bold text-zinc-600 block mb-4 tracking-[0.2em]">Imagen del Plato (URL)</label>
@@ -435,17 +465,17 @@ const MenuSection: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
-              
-              <div className="w-full">
-                <label className="text-[10px] uppercase font-bold text-zinc-600 block mb-4 tracking-[0.2em]">Descripción Gastronómica</label>
-                <textarea 
-                  value={editingItem.desc} 
-                  onFocus={(e) => handleInputFocus(e, 'desc')} 
-                  onChange={e => setEditingItem({...editingItem, desc: e.target.value})} 
-                  rows={3} 
-                  className="w-full bg-zinc-900 border border-zinc-800 p-4 text-[11px] outline-none focus:border-amber-500 resize-none text-zinc-400 leading-relaxed font-light" 
-                />
+
+                <div className={editingItem.isExtra ? 'col-span-2' : ''}>
+                  <label className="text-[10px] uppercase font-bold text-zinc-600 block mb-4 tracking-[0.2em]">Descripción Gastronómica</label>
+                  <textarea 
+                    value={editingItem.desc} 
+                    onFocus={(e) => handleInputFocus(e, 'desc')} 
+                    onChange={e => setEditingItem({...editingItem, desc: e.target.value})} 
+                    rows={3} 
+                    className="w-full bg-zinc-900 border border-zinc-800 p-4 text-[11px] outline-none focus:border-amber-500 resize-none text-zinc-400 leading-relaxed font-light" 
+                  />
+                </div>
               </div>
             </div>
 
