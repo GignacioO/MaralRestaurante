@@ -55,13 +55,16 @@ const AdminLoginModal: React.FC = () => {
               onChange={(e) => setInputValue(e.target.value)}
               className={`w-full bg-zinc-900 border ${error ? 'border-red-500 animate-shake' : 'border-zinc-800'} p-4 pr-12 text-center text-sm outline-none focus:border-amber-500 text-white transition-all tracking-[0.5em] font-black`}
             />
+            {/* Botón de visibilidad de contraseña (Ojito) */}
             <button 
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors z-10"
+              title={showPassword ? "Ocultar clave" : "Mostrar clave"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            
             {error && (
               <p className="text-red-500 text-[9px] uppercase font-bold tracking-widest mt-3 text-center flex items-center justify-center gap-2">
                 <AlertCircle size={10} /> Clave incorrecta
