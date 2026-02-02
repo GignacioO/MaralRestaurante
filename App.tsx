@@ -8,11 +8,14 @@ import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminBar from './components/AdminBar';
+import AdminLoginModal from './components/AdminLoginModal';
 import { INITIAL_MENU, MenuCategory, APP_VERSION } from './constants';
 
 interface AdminContextType {
   isAdmin: boolean;
   setIsAdmin: (val: boolean) => void;
+  showLoginModal: boolean;
+  setShowLoginModal: (val: boolean) => void;
   menu: MenuCategory[];
   updateMenu: (newMenu: MenuCategory[]) => void;
   undo: () => void;
@@ -43,22 +46,18 @@ const DEFAULT_CONTENT = {
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [password, setPassword] = useState(() => localStorage.getItem('maral_pass') || 'admin123');
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedMenu = localStorage.getItem('maral_menu');
-    // Si la versión es distinta, forzamos INITIAL_MENU para que aparezcan guarniciones/salsas nuevas
-    if (savedVersion !== APP_VERSION) {
-      return INITIAL_MENU;
-    }
+    if (savedVersion !== APP_VERSION) return INITIAL_MENU;
     return savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU;
   });
   const [content, setContent] = useState(() => {
     const savedVersion = localStorage.getItem('maral_version');
     const savedContent = localStorage.getItem('maral_content');
-    if (savedVersion !== APP_VERSION) {
-      return DEFAULT_CONTENT;
-    }
+    if (savedVersion !== APP_VERSION) return DEFAULT_CONTENT;
     return savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT;
   });
 
@@ -96,7 +95,8 @@ function App() {
 
   return (
     <AdminContext.Provider value={{ 
-      isAdmin, setIsAdmin, menu, updateMenu, undo, redo,
+      isAdmin, setIsAdmin, showLoginModal, setShowLoginModal,
+      menu, updateMenu, undo, redo,
       canUndo: past.length > 0, canRedo: future.length > 0,
       password, updatePassword: setPassword,
       content, updateContent: (newC: any) => setContent({...content, ...newC})
@@ -112,6 +112,7 @@ function App() {
           <Contact />
         </main>
         <Footer />
+        <AdminLoginModal />
       </div>
     </AdminContext.Provider>
   );
