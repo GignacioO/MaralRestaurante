@@ -1,12 +1,13 @@
 
 import React, { useState, useContext, useEffect } from 'react';
 import { AdminContext } from '../App';
-import { X, Lock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, Lock, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const AdminLoginModal: React.FC = () => {
   const admin = useContext(AdminContext);
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (!admin?.showLoginModal) return null;
 
@@ -17,6 +18,7 @@ const AdminLoginModal: React.FC = () => {
       admin.setShowLoginModal(false);
       setInputValue('');
       setError(false);
+      setShowPassword(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setError(true);
@@ -44,15 +46,22 @@ const AdminLoginModal: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="relative">
             <input 
               autoFocus
-              type="password" 
+              type={showPassword ? "text" : "password"} 
               placeholder="Ingrese clave..." 
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className={`w-full bg-zinc-900 border ${error ? 'border-red-500 animate-shake' : 'border-zinc-800'} p-4 text-center text-sm outline-none focus:border-amber-500 text-white transition-all tracking-[0.5em] font-black`}
+              className={`w-full bg-zinc-900 border ${error ? 'border-red-500 animate-shake' : 'border-zinc-800'} p-4 pr-12 text-center text-sm outline-none focus:border-amber-500 text-white transition-all tracking-[0.5em] font-black`}
             />
+            <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-amber-500 transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
             {error && (
               <p className="text-red-500 text-[9px] uppercase font-bold tracking-widest mt-3 text-center flex items-center justify-center gap-2">
                 <AlertCircle size={10} /> Clave incorrecta
