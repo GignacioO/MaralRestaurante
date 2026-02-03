@@ -2,7 +2,8 @@
 import React, { useContext } from 'react';
 import { ArrowRight, ChevronDown, Edit2 } from 'lucide-react';
 import { RESTAURANT_DATA } from '../constants';
-import { AdminContext } from '../App';
+// Corrected import path for AdminContext
+import { AdminContext } from '../context/AdminContext';
 
 const Hero: React.FC = () => {
   const admin = useContext(AdminContext);
