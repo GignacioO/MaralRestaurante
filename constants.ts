@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.2";
+export const APP_VERSION = "2.4";
 export const RESTAURANT_DATA = {
   "name": "MARAL RESTAURANTE",
   "address": "Tucumán 2201, C1051 ACA, Ciudad Autónoma de Buenos Aires",
@@ -10,6 +10,13 @@ export const RESTAURANT_DATA = {
   "locationCode": "9JX2+5G",
   "googleMapsEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284.187834479549!2d-58.39764522425988!3d-34.60157927295701!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bccac1a6f87577%3A0xc64e123616238b93!2sTucum%C3%A1n%202201%2C%20C1051%20ACA%2C%20Cdad.%20Aut%C3%B3noma%20de%20Buenos%20Aires!5e0!3m2!1ses!2sar!4v1715421234567!5m2!1ses!2sar",
   "googleMapsUrl": "https://www.google.com/maps/dir/?api=1&destination=Tucumán+2201+CABA"
+};
+export const INITIAL_CONTENT = {
+  "heroTitle": "MARAL RESTAURANTE",
+  "heroSubtitle": "Sabor que trasciende, momentos que perduran en el corazón de Buenos Aires.",
+  "aboutTitle": "Calidad que define nuestra historia",
+  "aboutDesc1": "En Maral Restaurante, nos dedicamos a elevar la tradición culinaria porteña. Ubicados estratégicamente en el corazón de la ciudad, ofrecemos un refugio de sabor para aquellos que buscan una experiencia cuidada en cada detalle.",
+  "aboutDesc2": "Nuestra filosofía se basa en la selección rigurosa de ingredientes frescos y la pasión por el servicio. Ya sea para un desayuno tranquilo o una cena sofisticada, Maral es el punto de encuentro donde la calidad y la hospitalidad se unen."
 };
 export interface MenuItem { name: string; price: string; desc: string; image?: string; side?: { name: string; price: string; }; }
 export interface MenuCategory { id: string; name: string; items: MenuItem[]; extras?: MenuItem[]; }
@@ -29,9 +36,9 @@ export const INITIAL_MENU: MenuCategory[] = [
         "desc": "Anillos de calamar tiernos con limón y perejil."
       },
       {
-        "name": "Revista ",
-        "price": "$999",
-        "desc": "Descripción...",
+        "name": "pelota libre 1025",
+        "price": "$1025",
+        "desc": "vamooss",
         "image": ""
       }
     ]
