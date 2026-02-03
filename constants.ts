@@ -68,6 +68,12 @@ export const INITIAL_MENU: MenuCategory[] = [
         "price": "$8500",
         "desc": "Pastas frescas elaboradas artesanalmente. (Elegir salsa abajo)",
         "image": "https://i.postimg.cc/FkdK21Jx/ravioles.jpg"
+      },
+      {
+        "name": "Revistas deportivas ",
+        "price": "$666",
+        "desc": "Descripción...",
+        "image": ""
       }
     ],
     "extras": [
