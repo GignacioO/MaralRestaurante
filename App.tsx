@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -11,43 +11,16 @@ import AdminBar from './components/AdminBar';
 import AdminFab from './components/AdminFab';
 import AdminLoginModal from './components/AdminLoginModal';
 import { INITIAL_MENU, INITIAL_CONTENT, MenuCategory, APP_VERSION } from './constants';
-
-interface AdminContextType {
-  isAdmin: boolean;
-  setIsAdmin: (val: boolean) => void;
-  showLoginModal: boolean;
-  setShowLoginModal: (val: boolean) => void;
-  menu: MenuCategory[];
-  updateMenu: (newMenu: MenuCategory[]) => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  password: string;
-  updatePassword: (newPass: string) => void;
-  content: {
-    heroTitle: string;
-    heroSubtitle: string;
-    aboutTitle: string;
-    aboutDesc1: string;
-    aboutDesc2: string;
-  };
-  updateContent: (newContent: any) => void;
-}
-
-export const AdminContext = createContext<AdminContextType | undefined>(undefined);
+import { AdminContext } from './context/AdminContext';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [password, setPassword] = useState(() => localStorage.getItem('maral_pass') || 'admin123');
   
-  // DETECCIÓN DE VERSIÓN MEJORADA
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
     const savedVersion = localStorage.getItem('maral_version');
     if (savedVersion !== APP_VERSION) {
-      // Si la versión no coincide, LIMPIAMOS TODO para asegurar datos frescos
-      console.log("Nueva versión detectada, limpiando caché...");
       localStorage.removeItem('maral_menu');
       localStorage.removeItem('maral_content');
       return INITIAL_MENU;
@@ -78,7 +51,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Guardar en local solo si estamos en la misma versión
   useEffect(() => {
     localStorage.setItem('maral_menu', JSON.stringify(menu));
     localStorage.setItem('maral_content', JSON.stringify(content));
@@ -114,7 +86,7 @@ function App() {
       menu, updateMenu, undo, redo,
       canUndo: past.length > 0, canRedo: future.length > 0,
       password, updatePassword: setPassword,
-      content, updateContent: (newC: any) => setContent({...content, ...newC})
+      content, updateContent: (newC: any) => setContent(prev => ({...prev, ...newC}))
     }}>
       <div className={`min-h-screen bg-zinc-950 text-zinc-100 ${isAdmin ? 'pt-12' : ''}`}>
         {isAdmin && <AdminBar />}
