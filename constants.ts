@@ -36,9 +36,9 @@ export const INITIAL_MENU: MenuCategory[] = [
         "desc": "Anillos de calamar tiernos con limón y perejil."
       },
       {
-        "name": "pelota libre 1025",
-        "price": "$1025",
-        "desc": "vamooss",
+        "name": "1046 entrada",
+        "price": "$111",
+        "desc": "Descripción...",
         "image": ""
       }
     ]
