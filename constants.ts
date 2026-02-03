@@ -33,7 +33,14 @@ export const INITIAL_MENU: MenuCategory[] = [
   {
     "id": "bebidas",
     "name": "Bebidas",
-    "items": []
+    "items": [
+      {
+        "name": "Agua sg",
+        "price": "$900",
+        "desc": "Descripción...",
+        "image": ""
+      }
+    ]
   },
   {
     "id": "minutas",
