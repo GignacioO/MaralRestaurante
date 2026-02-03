@@ -1,7 +1,8 @@
 
 import React, { useContext } from 'react';
 import { Edit2 } from 'lucide-react';
-import { AdminContext } from '../App';
+// Corrected import path for AdminContext
+import { AdminContext } from '../context/AdminContext';
 
 const About: React.FC = () => {
   const admin = useContext(AdminContext);
