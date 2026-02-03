@@ -8,9 +8,10 @@ import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminBar from './components/AdminBar';
-import AdminFab from './components/AdminFab';
-import AdminLoginModal from './components/AdminLoginModal';
+import AdminFab from './AdminFab'; // Corregido: está en la raíz
+import AdminLoginModal from './AdminLoginModal'; // Corregido: está en la raíz
 import { INITIAL_MENU, INITIAL_CONTENT, MenuCategory, APP_VERSION } from './constants';
+// Corrected import path for AdminContext
 import { AdminContext } from './context/AdminContext';
 
 function App() {
