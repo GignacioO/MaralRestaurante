@@ -1,6 +1,7 @@
 
 import React, { useState, useContext, useEffect, useRef, useMemo } from 'react';
-import { AdminContext } from '../App';
+// Corrected import path for AdminContext
+import { AdminContext } from '../context/AdminContext';
 import { Plus, Edit2, Trash2, FileDown, Camera, X, LayoutGrid, List, Search, UtensilsCrossed, ArrowRight, CheckCircle2, Sparkles, ShieldAlert } from 'lucide-react';
 
 interface EditingItem {
