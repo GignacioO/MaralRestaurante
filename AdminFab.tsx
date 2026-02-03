@@ -1,4 +1,5 @@
-import React, { useState, useContext, useEffect } from 'react';
+
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Lock, RotateCcw, RotateCw, Save, X, ShieldCheck, Settings, Loader2, RefreshCcw, CheckCircle2, AlertCircle, Github, Eye, EyeOff, Globe, ExternalLink, Info, AlertTriangle, Terminal, Activity, ChevronDown, ChevronUp, Search, Key, Check, FileCode, WifiOff, Trash2, GitBranch, RefreshCw } from 'lucide-react';
 import { AdminContext } from '../App';
 import { RESTAURANT_DATA, REVIEWS, APP_VERSION } from '../constants';
@@ -10,6 +11,9 @@ const AdminFab: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Rastreador de versión para permitir múltiples subidas en una misma sesión
+  const sessionVersionRef = useRef<string>(APP_VERSION);
   
   const [tempRepo, setTempRepo] = useState(localStorage.getItem('maral_gh_repo') || '');
   const [tempToken, setTempToken] = useState(localStorage.getItem('maral_gh_token') || '');
@@ -95,19 +99,21 @@ const AdminFab: React.FC = () => {
     setStatus('loading');
     
     try {
-      // 1. Calcular nueva versión (ej: 2.3 -> 2.4)
-      const parts = APP_VERSION.split('.');
-      // Fix: Convert the incremented version number to string before concatenating with other version parts to resolve type mismatch
+      // 1. Calcular nueva versión basándonos en la última subida de esta sesión
+      const parts = sessionVersionRef.current.split('.');
       const nextVer = parts.slice(0, -1).concat([(parseInt(parts[parts.length-1]) + 1).toString()]).join('.');
       addLog(`Preparando actualización global a v${nextVer}...`);
 
-      const apiUrl = `https://api.github.com/repos/${repo}/contents/constants.ts?ref=${branch}`;
-      addLog(`Consultando servidor de GitHub...`);
+      // Cache-busting: Añadimos un timestamp para que GitHub no nos devuelva un SHA viejo
+      const apiUrlWithCacheBuster = `https://api.github.com/repos/${repo}/contents/constants.ts?ref=${branch}&t=${Date.now()}`;
+      addLog(`Consultando ID actual del archivo...`);
 
-      const getRes = await fetch(apiUrl, {
+      const getRes = await fetch(apiUrlWithCacheBuster, {
         headers: { 
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Accept': 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       });
       
@@ -115,9 +121,12 @@ const AdminFab: React.FC = () => {
       if (getRes.ok) {
         const data = await getRes.json();
         sha = data.sha;
+        addLog(`ID de archivo obtenido correctamente.`);
+      } else {
+        addLog(`Aviso: No se pudo obtener el ID previo (puede ser la primera subida).`);
       }
 
-      // 2. Contenido total incluyendo los textos editados de Hero/Nosotros
+      // 2. Contenido total
       const fileContent = `export const APP_VERSION = "${nextVer}";
 export const RESTAURANT_DATA = ${JSON.stringify(RESTAURANT_DATA, null, 2)};
 export const INITIAL_CONTENT = ${JSON.stringify(admin.content, null, 2)};
@@ -129,8 +138,8 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
       const utf8Bytes = new TextEncoder().encode(fileContent);
       const base64Content = btoa(String.fromCharCode(...utf8Bytes));
 
-      addLog(`Subiendo archivos...`);
-      const putRes = await fetch(apiUrl.split('?')[0], {
+      addLog(`Subiendo cambios a GitHub...`);
+      const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/constants.ts`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`, 
@@ -146,25 +155,31 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
       });
 
       if (putRes.ok) {
+        // ACTUALIZACIÓN EXITOSA:
+        // Actualizamos la referencia de versión para la próxima subida en esta misma sesión
+        sessionVersionRef.current = nextVer;
+        
         setStatus('success');
         setStatusMsg('¡SUBIDA EXITOSA!');
         addLog(`--- WEB ACTUALIZADA ---`);
-        addLog(`Nueva versión: v${nextVer}`);
-        addLog(`INSTRUCCIÓN: Espera 2 minutos y entra en la PC.`);
-        addLog(`Si no cambia, usa CTRL + F5 en la PC.`);
+        addLog(`Versión en servidor: v${nextVer}`);
+        addLog(`Espera 2 minutos para ver los cambios en la PC.`);
         
-        // Actualizar localmente la versión para evitar que el celular limpie su propia edición al recargar
         localStorage.setItem('maral_version', nextVer);
         
         setTimeout(() => setStatus('idle'), 6000);
       } else {
         const errorData = await putRes.json();
+        // Si el error es de SHA, damos una instrucción clara
+        if (errorData.message && errorData.message.includes('match')) {
+          throw new Error("Conflicto de ID (GitHub aún no procesó la subida anterior). Por favor, espera 10 segundos e intenta de nuevo.");
+        }
         throw new Error(errorData.message || 'Error en GitHub');
       }
     } catch (err: any) {
       setStatus('error');
       setStatusMsg(err.message);
-      addLog(`ERROR CRÍTICO: ${err.message}`);
+      addLog(`ERROR: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
