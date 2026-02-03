@@ -2,7 +2,8 @@
 import React, { useContext, useState } from 'react';
 import { Utensils, Lock, RefreshCcw, Info, X, ShieldCheck, Database, Globe } from 'lucide-react';
 import { RESTAURANT_DATA, APP_VERSION } from '../constants';
-import { AdminContext } from '../App';
+// Corrected import path for AdminContext
+import { AdminContext } from '../context/AdminContext';
 
 const Footer: React.FC = () => {
   const admin = useContext(AdminContext);
