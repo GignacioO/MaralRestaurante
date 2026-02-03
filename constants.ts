@@ -36,9 +36,9 @@ export const INITIAL_MENU: MenuCategory[] = [
         "desc": "Anillos de calamar tiernos con limón y perejil."
       },
       {
-        "name": "entada 1047",
-        "price": "$1047",
-        "desc": "Descripción...",
+        "name": "emtrada 1057",
+        "price": "$1057",
+        "desc": "sincroniza porfa :)",
         "image": ""
       }
     ]
