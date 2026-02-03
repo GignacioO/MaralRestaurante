@@ -8,8 +8,9 @@ import ReviewsSection from './components/ReviewsSection';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminBar from './components/AdminBar';
+import AdminFab from './components/AdminFab';
 import AdminLoginModal from './components/AdminLoginModal';
-import { INITIAL_MENU, MenuCategory, APP_VERSION } from './constants';
+import { INITIAL_MENU, INITIAL_CONTENT, MenuCategory, APP_VERSION } from './constants';
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -36,34 +37,48 @@ interface AdminContextType {
 
 export const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-const DEFAULT_CONTENT = {
-  heroTitle: "MARAL RESTAURANTE",
-  heroSubtitle: "Sabor que trasciende, momentos que perduran en el corazón de Buenos Aires.",
-  aboutTitle: "Calidad que define nuestra historia",
-  aboutDesc1: "En Maral Restaurante, nos dedicamos a elevar la tradición culinaria porteña. Ubicados estratégicamente en el corazón de la ciudad, ofrecemos un refugio de sabor para aquellos que buscan una experiencia cuidada en cada detalle.",
-  aboutDesc2: "Nuestra filosofía se basa en la selección rigurosa de ingredientes frescos y la pasión por el servicio. Ya sea para un desayuno tranquilo o una cena sofisticada, Maral es el punto de encuentro donde la calidad y la hospitalidad se unen."
-};
-
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [password, setPassword] = useState(() => localStorage.getItem('maral_pass') || 'admin123');
+  
+  // DETECCIÓN DE VERSIÓN MEJORADA
   const [menu, setMenu] = useState<MenuCategory[]>(() => {
     const savedVersion = localStorage.getItem('maral_version');
+    if (savedVersion !== APP_VERSION) {
+      // Si la versión no coincide, LIMPIAMOS TODO para asegurar datos frescos
+      console.log("Nueva versión detectada, limpiando caché...");
+      localStorage.removeItem('maral_menu');
+      localStorage.removeItem('maral_content');
+      return INITIAL_MENU;
+    }
     const savedMenu = localStorage.getItem('maral_menu');
-    if (savedVersion !== APP_VERSION) return INITIAL_MENU;
     return savedMenu ? JSON.parse(savedMenu) : INITIAL_MENU;
   });
+
   const [content, setContent] = useState(() => {
     const savedVersion = localStorage.getItem('maral_version');
+    if (savedVersion !== APP_VERSION) {
+      return INITIAL_CONTENT;
+    }
     const savedContent = localStorage.getItem('maral_content');
-    if (savedVersion !== APP_VERSION) return DEFAULT_CONTENT;
-    return savedContent ? JSON.parse(savedContent) : DEFAULT_CONTENT;
+    return savedContent ? JSON.parse(savedContent) : INITIAL_CONTENT;
   });
 
   const [past, setPast] = useState<MenuCategory[][]>([]);
   const [future, setFuture] = useState<MenuCategory[][]>([]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.altKey && e.key.toLowerCase() === 'a') {
+        setShowLoginModal(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Guardar en local solo si estamos en la misma versión
   useEffect(() => {
     localStorage.setItem('maral_menu', JSON.stringify(menu));
     localStorage.setItem('maral_content', JSON.stringify(content));
@@ -112,6 +127,7 @@ function App() {
           <Contact />
         </main>
         <Footer />
+        <AdminFab />
         <AdminLoginModal />
       </div>
     </AdminContext.Provider>
