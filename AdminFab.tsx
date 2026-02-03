@@ -1,8 +1,9 @@
 
-import React, { useState, useContext, useEffect, useRef } from 'react';
-import { Lock, RotateCcw, RotateCw, Save, X, ShieldCheck, Settings, Loader2, RefreshCcw, CheckCircle2, AlertCircle, Github, Eye, EyeOff, Globe, ExternalLink, Info, AlertTriangle, Terminal, Activity, ChevronDown, ChevronUp, Search, Key, Check, FileCode, WifiOff, Trash2, GitBranch, RefreshCw } from 'lucide-react';
-import { AdminContext } from '../context/AdminContext';
-import { RESTAURANT_DATA, REVIEWS, APP_VERSION } from '../constants';
+import React, { useState, useContext, useRef } from 'react';
+import { Lock, X, ShieldCheck, Settings, Loader2, RefreshCcw, Github, Globe } from 'lucide-react';
+// Corrected import path for AdminContext
+import { AdminContext } from './context/AdminContext';
+import { RESTAURANT_DATA, REVIEWS, APP_VERSION } from './constants';
 
 type SyncStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -10,28 +11,15 @@ const AdminFab: React.FC = () => {
   const admin = useContext(AdminContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const sessionVersionRef = useRef<string>(APP_VERSION);
-  
-  const [tempRepo, setTempRepo] = useState(localStorage.getItem('maral_gh_repo') || '');
-  const [tempToken, setTempToken] = useState(localStorage.getItem('maral_gh_token') || '');
-  const [tempBranch, setTempBranch] = useState(localStorage.getItem('maral_gh_branch') || 'main');
-  const [showToken, setShowToken] = useState(false);
-  const [configSaved, setConfigSaved] = useState(false);
-
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [statusMsg, setStatusMsg] = useState('');
-  const [lastLog, setLastLog] = useState<string[]>([]);
 
   if (!admin) return null;
-
-  const isConfigIncomplete = !tempRepo || !tempToken;
-  const addLog = (msg: string) => setLastLog(prev => [...prev.slice(-8), `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const handleLogin = () => {
     if (admin.isAdmin) {
       setIsOpen(!isOpen);
-      if (isOpen) setShowSettings(false);
     } else {
       admin.setShowLoginModal(true);
     }
@@ -42,7 +30,7 @@ const AdminFab: React.FC = () => {
     const repo = (localStorage.getItem('maral_gh_repo') || '').trim();
     const branch = (localStorage.getItem('maral_gh_branch') || 'main').trim();
     
-    if (!token || !repo) { setStatus('error'); setStatusMsg('Configura GitHub primero.'); setShowSettings(true); return; }
+    if (!token || !repo) { setStatus('error'); setStatusMsg('Configura GitHub primero.'); return; }
 
     setIsSyncing(true); setStatus('loading');
     try {
@@ -82,15 +70,16 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
   return (
     <div className="fixed bottom-8 right-8 z-[150] no-print flex flex-col items-end gap-4">
       {status !== 'idle' && (
-        <div className={`p-4 rounded border-l-4 w-[300px] bg-zinc-900 ${status === 'loading' ? 'border-amber-500 text-amber-500' : status === 'success' ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}>
+        <div className={`p-4 rounded border-l-4 w-[300px] bg-zinc-900 shadow-2xl ${status === 'loading' ? 'border-amber-500 text-amber-500' : status === 'success' ? 'border-green-500 text-green-400' : 'border-red-500 text-red-400'}`}>
           <p className="text-[10px] font-bold">{statusMsg}</p>
         </div>
       )}
-      <button onClick={handleLogin} className="p-6 rounded-full bg-amber-600 border-2 border-amber-400 shadow-2xl">
+      <button onClick={handleLogin} className="p-6 rounded-full bg-amber-600 border-2 border-amber-400 shadow-2xl hover:scale-110 transition-transform">
         {admin.isAdmin ? (isOpen ? <X size={28} className="text-white" /> : <ShieldCheck size={28} className="text-white" />) : <Lock size={24} className="text-white" />}
       </button>
       {admin.isAdmin && isOpen && (
-        <button onClick={publishToGithub} disabled={isSyncing} className="px-6 py-4 bg-green-600 text-white text-[10px] font-black uppercase rounded shadow-xl">
+        <button onClick={publishToGithub} disabled={isSyncing} className="px-6 py-4 bg-green-600 text-white text-[10px] font-black uppercase rounded shadow-xl hover:bg-green-500 transition-colors flex items-center gap-2">
+          {isSyncing ? <Loader2 className="animate-spin" size={14} /> : <Globe size={14} />}
           {isSyncing ? 'Subiendo...' : 'Publicar Todo'}
         </button>
       )}
