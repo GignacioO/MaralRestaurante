@@ -1,5 +1,5 @@
 
-export const APP_VERSION = "2.5";
+export const APP_VERSION = "2.5.1";
 
 export const RESTAURANT_DATA = {
   name: "MARAL RESTAURANTE",
@@ -47,7 +47,6 @@ export const INITIAL_MENU: MenuCategory[] = [
     items: [
       { name: "Empanadas Salteñas", price: "$1200", desc: "Carne cortada a cuchillo, fritas o al horno." },
       { name: "Rabas a la Romana", price: "$8500", desc: "Anillos de calamar tiernos con limón y perejil." }
-      { name: "prueba web 1134", price: "$1134", desc: "desde chrome." }
     ]
   },
   {
