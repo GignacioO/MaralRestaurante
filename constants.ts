@@ -27,20 +27,19 @@ export const INITIAL_MENU: MenuCategory[] = [
         "name": "Rabas a la Romana",
         "price": "$8500",
         "desc": "Anillos de calamar tiernos con limón y perejil."
+      },
+      {
+        "name": "Revista ",
+        "price": "$999",
+        "desc": "Descripción...",
+        "image": ""
       }
     ]
   },
   {
     "id": "bebidas",
     "name": "Bebidas",
-    "items": [
-      {
-        "name": "Agua sg",
-        "price": "$900",
-        "desc": "Descripción...",
-        "image": ""
-      }
-    ]
+    "items": []
   },
   {
     "id": "minutas",
@@ -75,12 +74,6 @@ export const INITIAL_MENU: MenuCategory[] = [
         "price": "$8500",
         "desc": "Pastas frescas elaboradas artesanalmente. (Elegir salsa abajo)",
         "image": "https://i.postimg.cc/FkdK21Jx/ravioles.jpg"
-      },
-      {
-        "name": "Revistas deportivas ",
-        "price": "$666",
-        "desc": "Descripción...",
-        "image": ""
       }
     ],
     "extras": [
