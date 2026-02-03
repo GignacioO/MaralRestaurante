@@ -12,7 +12,6 @@ const AdminFab: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   
-  // Rastreador de versión para permitir múltiples subidas en una misma sesión
   const sessionVersionRef = useRef<string>(APP_VERSION);
   
   const [tempRepo, setTempRepo] = useState(localStorage.getItem('maral_gh_repo') || '');
@@ -41,10 +40,7 @@ const AdminFab: React.FC = () => {
   };
 
   const sanitizeInput = (val: string) => {
-    return val
-      .replace(/[\u2013\u2014]/g, "-") 
-      .replace(/\s+/g, '')
-      .trim();
+    return val.replace(/[\u2013\u2014]/g, "-").replace(/\s+/g, '').trim();
   };
 
   const saveConfig = () => {
@@ -86,11 +82,11 @@ const AdminFab: React.FC = () => {
     const branch = sanitizeInput(localStorage.getItem('maral_gh_branch') || 'main');
     
     setLastLog([]);
-    addLog('--- INICIANDO PUBLICACIÓN MAESTRA ---');
+    addLog('--- INICIANDO PUBLICACIÓN ---');
 
     if (!token || !repo) {
       setStatus('error');
-      setStatusMsg('Falta configurar Repo/Token');
+      setStatusMsg('Configuración incompleta.');
       setShowSettings(true);
       return;
     }
@@ -99,21 +95,18 @@ const AdminFab: React.FC = () => {
     setStatus('loading');
     
     try {
-      // 1. Calcular nueva versión basándonos en la última subida de esta sesión
       const parts = sessionVersionRef.current.split('.');
       const nextVer = parts.slice(0, -1).concat([(parseInt(parts[parts.length-1]) + 1).toString()]).join('.');
-      addLog(`Preparando actualización global a v${nextVer}...`);
+      addLog(`Subiendo actualización a v${nextVer}...`);
 
-      // Cache-busting: Añadimos un timestamp para que GitHub no nos devuelva un SHA viejo
-      const apiUrlWithCacheBuster = `https://api.github.com/repos/${repo}/contents/constants.ts?ref=${branch}&t=${Date.now()}`;
-      addLog(`Consultando ID actual del archivo...`);
-
-      const getRes = await fetch(apiUrlWithCacheBuster, {
+      // Mejorado: Forzamos a la API de GitHub a darnos la versión más fresca ignorando cualquier caché
+      const apiUrl = `https://api.github.com/repos/${repo}/contents/constants.ts?ref=${branch}&t=${Date.now()}`;
+      
+      const getRes = await fetch(apiUrl, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github.v3+json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
         }
       });
       
@@ -121,12 +114,9 @@ const AdminFab: React.FC = () => {
       if (getRes.ok) {
         const data = await getRes.json();
         sha = data.sha;
-        addLog(`ID de archivo obtenido correctamente.`);
-      } else {
-        addLog(`Aviso: No se pudo obtener el ID previo (puede ser la primera subida).`);
+        addLog(`Sincronización de ID exitosa.`);
       }
 
-      // 2. Contenido total
       const fileContent = `export const APP_VERSION = "${nextVer}";
 export const RESTAURANT_DATA = ${JSON.stringify(RESTAURANT_DATA, null, 2)};
 export const INITIAL_CONTENT = ${JSON.stringify(admin.content, null, 2)};
@@ -138,7 +128,6 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
       const utf8Bytes = new TextEncoder().encode(fileContent);
       const base64Content = btoa(String.fromCharCode(...utf8Bytes));
 
-      addLog(`Subiendo cambios a GitHub...`);
       const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/constants.ts`, {
         method: 'PUT',
         headers: { 
@@ -147,7 +136,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
           'Accept': 'application/vnd.github.v3+json'
         },
         body: JSON.stringify({ 
-          message: `Update Full v${nextVer} for global sync`, 
+          message: `Update v${nextVer} via Admin Panel`, 
           content: base64Content, 
           sha,
           branch 
@@ -155,31 +144,23 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
       });
 
       if (putRes.ok) {
-        // ACTUALIZACIÓN EXITOSA:
-        // Actualizamos la referencia de versión para la próxima subida en esta misma sesión
         sessionVersionRef.current = nextVer;
-        
         setStatus('success');
-        setStatusMsg('¡SUBIDA EXITOSA!');
-        addLog(`--- WEB ACTUALIZADA ---`);
-        addLog(`Versión en servidor: v${nextVer}`);
-        addLog(`Espera 2 minutos para ver los cambios en la PC.`);
-        
+        setStatusMsg(`¡Actualizado a v${nextVer}!`);
         localStorage.setItem('maral_version', nextVer);
-        
-        setTimeout(() => setStatus('idle'), 6000);
+        addLog(`Publicado correctamente.`);
+        setTimeout(() => setStatus('idle'), 5000);
       } else {
-        const errorData = await putRes.json();
-        // Si el error es de SHA, damos una instrucción clara
-        if (errorData.message && errorData.message.includes('match')) {
-          throw new Error("Conflicto de ID (GitHub aún no procesó la subida anterior). Por favor, espera 10 segundos e intenta de nuevo.");
+        const errJson = await putRes.json();
+        if (errJson.message && errJson.message.includes('match')) {
+          throw new Error("ERROR DE ID: GitHub detectó un cambio externo. Por favor, refresca la página (F5) e intenta de nuevo.");
         }
-        throw new Error(errorData.message || 'Error en GitHub');
+        throw new Error(errJson.message || 'Error en servidor de GitHub');
       }
     } catch (err: any) {
       setStatus('error');
       setStatusMsg(err.message);
-      addLog(`ERROR: ${err.message}`);
+      addLog(`FALLO: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -188,14 +169,14 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
   return (
     <div className="fixed bottom-8 right-8 z-[150] no-print flex flex-col items-end gap-4 max-w-[90vw]">
       {status !== 'idle' && (
-        <div className={`flex flex-col gap-1 px-6 py-4 rounded-sm shadow-2xl animate-in slide-in-from-right-10 duration-300 border-l-4 w-[300px] sm:w-[450px] ${
+        <div className={`flex flex-col gap-1 px-6 py-4 rounded-sm shadow-2xl border-l-4 w-[300px] sm:w-[450px] animate-in slide-in-from-right-10 duration-300 ${
           status === 'loading' ? 'bg-zinc-900 border-amber-500 text-amber-500' :
           status === 'success' ? 'bg-zinc-900 border-green-500 text-green-400' : 
           'bg-zinc-900 border-red-500 text-red-400'
         }`}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-              <Activity size={14} /> Estado de Publicación
+              <Activity size={14} /> Estado
             </span>
             <button onClick={() => setStatus('idle')} className="text-zinc-600 hover:text-white"><X size={14} /></button>
           </div>
@@ -203,15 +184,10 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
           <div className="bg-black/50 p-4 rounded font-mono text-[9px] text-zinc-400 space-y-1.5 max-h-[180px] overflow-y-auto border border-white/5">
             {lastLog.map((log, i) => <p key={i} className="border-b border-white/5 pb-1 last:border-0">{log}</p>)}
           </div>
-          {status === 'success' && (
-            <div className="mt-4 flex flex-col gap-2">
-              <p className="text-[8px] uppercase font-bold text-zinc-500 flex items-center gap-1">
-                <Info size={10} /> Los clientes verán los cambios en 2 minutos.
-              </p>
-              <button onClick={() => window.location.reload()} className="flex items-center justify-center gap-2 bg-zinc-800 py-2 text-[9px] uppercase font-black hover:bg-zinc-700 transition-colors">
-                <RefreshCw size={12} /> Recargar esta página
-              </button>
-            </div>
+          {status === 'error' && (
+            <button onClick={() => window.location.reload()} className="mt-4 bg-zinc-800 py-2 text-[9px] uppercase font-black hover:bg-zinc-700 transition-colors">
+              Refrescar y reintentar
+            </button>
           )}
         </div>
       )}
@@ -222,17 +198,12 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
             <div className="fixed inset-0 md:relative md:inset-auto bg-zinc-950 border md:border-zinc-800 p-6 sm:p-8 md:rounded-sm shadow-2xl w-full md:w-[480px] z-[200] flex flex-col border-t-4 border-t-amber-600">
               <div className="flex justify-between items-center mb-6">
                 <h4 className="text-[10px] uppercase font-black text-amber-500 tracking-[0.2em] flex items-center gap-2">
-                  <Terminal size={14} /> Panel de Enlace GitHub
+                  <Terminal size={14} /> Configuración GitHub
                 </h4>
                 <button onClick={() => setShowSettings(false)} className="text-zinc-600 hover:text-white p-2"><X size={24} /></button>
               </div>
 
               <div className="space-y-4 flex-1 overflow-y-auto pb-4">
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded text-[9px] text-amber-500/80 leading-relaxed mb-4">
-                  <AlertTriangle size={12} className="inline mr-2" />
-                  IMPORTANTE: Si la PC muestra algo viejo, usa <b>CTRL + F5</b> en el navegador de la PC para limpiar la memoria.
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 sm:col-span-1">
                     <label className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest block mb-2">Usuario/Repo</label>
@@ -257,7 +228,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
                 </div>
 
                 <div>
-                  <label className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest block mb-2">Token de GitHub</label>
+                  <label className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest block mb-2">Token Personal</label>
                   <div className="relative">
                     <input 
                       type={showToken ? "text" : "password"} 
@@ -272,7 +243,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
                 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button onClick={saveConfig} className={`py-4 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 rounded-sm transition-all ${configSaved ? 'bg-green-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}>
-                    {configSaved ? <Check size={14} /> : <Save size={14} />} Guardar Ajustes
+                    {configSaved ? <Check size={14} /> : <Save size={14} />} Guardar
                   </button>
                   <button onClick={resetConfig} className="py-4 bg-zinc-900 text-zinc-600 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:text-red-500 rounded-sm border border-zinc-800">
                     <Trash2 size={14} /> Borrar
@@ -286,7 +257,7 @@ export const REVIEWS = ${JSON.stringify(REVIEWS, null, 2)};`;
             <button onClick={() => setShowSettings(!showSettings)} className={`p-4 rounded-sm border transition-all shadow-xl ${showSettings ? 'bg-amber-600 text-white border-amber-500' : 'bg-zinc-900 border-zinc-800 text-zinc-600 hover:text-white'}`}><Settings size={18} /></button>
             <button onClick={publishToGithub} disabled={isSyncing} className="bg-green-600 text-white px-8 py-4 rounded-sm shadow-2xl font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-3 hover:bg-green-500 active:scale-95 transition-all">
               {isSyncing ? <Loader2 size={18} className="animate-spin" /> : <Globe size={18} />} 
-              {isSyncing ? 'Sincronizando...' : 'Publicar Todo'}
+              {isSyncing ? 'Subiendo...' : 'Publicar Todo'}
             </button>
           </div>
         </div>
