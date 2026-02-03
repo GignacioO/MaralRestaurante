@@ -29,7 +29,7 @@ export const INITIAL_MENU: MenuCategory[] = [
         "desc": "Anillos de calamar tiernos con limón y perejil."
       },
       {
-        "name": "Pelota libre",
+        "name": "Revista ",
         "price": "$999",
         "desc": "Descripción...",
         "image": ""
@@ -39,14 +39,7 @@ export const INITIAL_MENU: MenuCategory[] = [
   {
     "id": "bebidas",
     "name": "Bebidas",
-    "items": [
-      {
-        "name": "Agua sg 1018",
-        "price": "$1018",
-        "desc": "Descripción...",
-        "image": ""
-      }
-    ]
+    "items": []
   },
   {
     "id": "minutas",
