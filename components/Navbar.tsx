@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { Menu, X, Utensils, Lock, ShieldCheck } from 'lucide-react';
-import { AdminContext } from '../App';
+// Corrected import path for AdminContext
+import { AdminContext } from '../context/AdminContext';
 
 const Navbar: React.FC = () => {
   const admin = useContext(AdminContext);
@@ -39,26 +40,13 @@ const Navbar: React.FC = () => {
     setIsOpen(false);
   };
 
-  const handleAdminAccess = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleAdminAccess = () => {
     if (admin?.isAdmin) {
       setIsOpen(false);
       return;
     }
-    
-    // Usamos un pequeño delay opcional para asegurar que el evento táctil haya terminado
-    const pass = prompt('INGRESE CLAVE DE ACCESO:');
-    if (pass === admin?.password) {
-      admin.setIsAdmin(true);
-      setIsOpen(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (pass !== null) {
-      alert('Clave incorrecta.');
-    }
+    admin?.setShowLoginModal(true);
+    setIsOpen(false);
   };
 
   const navLinks = [
@@ -90,7 +78,7 @@ const Navbar: React.FC = () => {
             ))}
             <button
               onClick={handleAdminAccess}
-              className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] flex items-center gap-2 cursor-pointer border-l border-zinc-800 pl-6 ml-2 ${admin?.isAdmin ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-500'}`}
+              className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] flex items-center gap-2 cursor-pointer border-l border-zinc-800 pl-6 ml-2 ${admin?.isAdmin ? 'text-amber-500' : 'text-amber-500 hover:text-white'}`}
             >
               {admin?.isAdmin ? <ShieldCheck size={14} /> : <Lock size={14} />}
               {admin?.isAdmin ? 'Admin' : 'Acceso'}
